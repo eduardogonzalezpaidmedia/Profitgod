@@ -1,9 +1,9 @@
 // Motor de oportunidades: analiza todo lo que hay en el mercado y devuelve UN ranking con flipping, fabricación, refinado y Mercado Negro.
-import { findFlips } from '../flipping/finder.js?v=0.10';
-import { scanCrafts } from './craftscan.js?v=0.10';
-import { scoreAll } from './score.js?v=0.10';
-import { toOpportunity } from './opportunity.js?v=0.10';
-import { buildPlan } from './plan.js?v=0.10';
+import { findFlips } from '../flipping/finder.js?v=0.11';
+import { scanCrafts } from './craftscan.js?v=0.11';
+import { scoreAll } from './score.js?v=0.11';
+import { toOpportunity } from './opportunity.js?v=0.11';
+import { buildPlan } from './plan.js?v=0.11';
 
 /**
  * p = { src, game, cfg, silver, hours, maxRisk:'BAJO'|'MEDIO'|'ALTO', extra:[ids públicos extra] }

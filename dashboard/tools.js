@@ -1,21 +1,25 @@
 // Herramientas: planificador de varios ítems (con Cocina y Alquimia), flips de encanto, historial del oro y tablas de referencia.
-import { el, chip, field, select, input, num } from './dom.js?v=0.10';
-import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.10';
-import { planCrafts, plannerIds } from '../tools/planner.js?v=0.10';
-import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.10';
-import { goldStats } from '../tools/gold.js?v=0.10';
-import { priceCard, searchAny } from '../tools/pricecard.js?v=0.10';
-import { referenceTables } from '../tools/reference.js?v=0.10';
-import { freshness, ageText } from '../data/freshness.js?v=0.10';
-import { fmt } from '../data/items.js?v=0.10';
+import { el, chip, field, select, input, num } from './dom.js?v=0.11';
+import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.11';
+import { planCrafts, plannerIds } from '../tools/planner.js?v=0.11';
+import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.11';
+import { goldStats } from '../tools/gold.js?v=0.11';
+import { KINDS, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.11';
+import { priceCard, searchAny } from '../tools/pricecard.js?v=0.11';
+import { referenceTables } from '../tools/reference.js?v=0.11';
+import { freshness, ageText } from '../data/freshness.js?v=0.11';
+import { fmt } from '../data/items.js?v=0.11';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
-const SUBS = [['precio', '🔎 Precio'], ['plan', '🧮 Planificador'], ['ench', '✨ Encantar'], ['oro', '🪙 Oro'], ['ref', '📚 Referencia']];
+const SUBS = [['precio', '🔎 Precio'], ['plan', '🧮 Planificador'], ['ench', '✨ Encantar'], ['mats', '💎 Runas y almas'], ['oro', '🪙 Oro'], ['ref', '📚 Referencia']];
 const PRESETS = [['', 'Todo'], ['food', '🍲 Cocina'], ['potion', '⚗️ Alquimia'], ['ore', 'Refinado (mineral)'], ['wood', 'Refinado (madera)'], ['fiber', 'Refinado (fibra)'], ['hide', 'Refinado (piel)'], ['rock', 'Refinado (piedra)']];
 
 export function mountTools(root, ctx) {
   let game = null, built = false, sub = 'precio';
+  const MK = 'profitgod.ench', MS = (() => { try { const j = JSON.parse(localStorage.getItem(MK)); return j && typeof j === 'object' ? j : {}; } catch (e) { return {}; } })();
+  MS.ids = MS.ids || {}; MS.prices = MS.prices || {}; MS.qty = MS.qty || {}; MS.src = MS.src || {};
+  const saveMS = () => { try { localStorage.setItem(MK, JSON.stringify(MS)); } catch (e) { /* sin almacenamiento */ } };
   const P = { items: [], buyCity: 'Lymhurst', craftCity: 'Lymhurst', saleCity: 'Caerleon', premium: false, focus: false, fee: '', station: '' }, E = { tier: 6, category: 'weapons', cost: { 1: '', 2: '', 3: '', 4: '' } }, ui = {};
 
   async function show(which) {
@@ -30,7 +34,7 @@ export function mountTools(root, ctx) {
   }
   function drawSub() {
     ui.bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === sub)); ui.body.replaceChildren();
-    ({ precio: drawPrice, plan: drawPlan, ench: drawEnch, oro: drawGold, ref: drawRef })[sub]();
+    ({ precio: drawPrice, plan: drawPlan, ench: drawEnch, mats: drawMats, oro: drawGold, ref: drawRef })[sub]();
   }
   const noSrc = () => !ctx.getSrc().usable();
   const errText = e => e && e.message && e.message.includes('Failed to fetch') ? 'No se pudo conectar con tu base.' : (e && e.message) || String(e);
@@ -146,7 +150,10 @@ export function mountTools(root, ctx) {
     ui.eCat = select(cats.map(k => [k, CATEGORY_LABEL[k] || k]), E.category, () => { E.category = ui.eCat.value; });
     ui.eTier = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), E.tier, () => { E.tier = +ui.eTier.value; });
     const g = el('div', 'grid'); g.append(field('Categoría', ui.eCat), field('Tier', ui.eTier));
-    [1, 2, 3, 4].forEach(l => g.appendChild(field('Costo de encantar a .' + l + ' (por objeto)', input(E.cost[l], e => { E.cost[l] = e.target.value; }, { inputMode: 'numeric', placeholder: '0' }))));
+    const auto = enchantCosts(MS, E.tier, E.category), upd = () => { const a = enchantCosts(MS, E.tier, E.category); [1, 2, 3, 4].forEach(l => { ui.eCostIn[l].placeholder = a[l] != null ? 'auto: ' + fmt(a[l]) : '0'; }); };
+    ui.eCat.addEventListener('change', upd); ui.eTier.addEventListener('change', upd); ui.eCostIn = {};
+    [1, 2, 3, 4].forEach(l => { ui.eCostIn[l] = input(E.cost[l], e => { E.cost[l] = e.target.value; }, { inputMode: 'numeric', placeholder: auto[l] != null ? 'auto: ' + fmt(auto[l]) : '0' }); g.appendChild(field('Costo de encantar a .' + l + ' (por objeto)', ui.eCostIn[l])); });
+    c.appendChild(el('p', 'hint', 'Déjalo vacío para usar el costo automático de «💎 Runas y almas» (cantidad × precio). Si escribes un número, manda el tuyo.'));
     ui.eGo = el('button', 'primary', 'Buscar flips'); ui.eGo.addEventListener('click', runEnch); ui.eMsg = el('span', 'msg'); const row = el('div', 'row'); row.append(ui.eGo, ui.eMsg);
     c.append(g, row); ui.eOut = el('section', 'card'); ui.eOut.hidden = true; ui.body.append(c, ui.eOut);
   }
@@ -156,7 +163,7 @@ export function mountTools(root, ctx) {
     ui.eGo.disabled = true; ui.eMsg.className = 'msg'; ui.eMsg.textContent = 'Leyendo ' + fmt(ids.length) + ' precios en ' + cities.length + ' ciudades…';
     try {
       const { map, errs } = await readMarket(ids, cities);
-      const cost = {}; [1, 2, 3, 4].forEach(l => { cost[l] = num(E.cost[l]); });
+      const a = enchantCosts(MS, E.tier, E.category), cost = {}, how = {}; [1, 2, 3, 4].forEach(l => { const m = num(E.cost[l]); cost[l] = m || a[l] || 0; how[l] = m ? 'manual' : a[l] ? 'automático' : 'sin costo'; }); E.how = how;
       const r = enchantFlips({ game, ids, buyCities: cities, saleCities: cities, premium: !!cfg.premium, enchantCost: cost, market: (c, id) => map.get(c + '|' + id) || null });
       ui.eMsg.className = errs.length ? 'msg err' : 'msg'; ui.eMsg.textContent = errs.join(' · '); drawEnchOut(r, cost);
     } catch (e) { ui.eMsg.className = 'msg err'; ui.eMsg.textContent = errText(e); }
@@ -164,7 +171,7 @@ export function mountTools(root, ctx) {
   }
   function drawEnchOut(r, cost) {
     const o = ui.eOut; o.hidden = false; o.replaceChildren(el('h2', '', 'Resultado'));
-    const anyCost = Object.values(cost).some(v => v > 0);
+    const anyCost = Object.values(cost).some(v => v > 0); if (anyCost && E.how) o.appendChild(el('p', 'hint', 'Costo de encantar usado: ' + [1, 2, 3, 4].map(l => '.' + l + ' ' + (cost[l] > 0 ? fmt(cost[l]) + ' (' + E.how[l] + ')' : 'sin costo')).join(' · ')));
     if (!anyCost) o.appendChild(el('div', 'warn', 'No ingresaste costo de encantamiento: las ganancias son BRUTAS (no restan runas, almas ni reliquias). Ingrésalo arriba para ver la ganancia real.'));
     if (!r.out.length) o.appendChild(el('div', 'warn', 'Datos insuficientes: no hay pares de precios frescos (menos de 24 h) para este tier y categoría.'));
     const t = el('table'), hr = el('tr'); ['Objeto', 'Compra', 'Venta', 'Ganancia', 'ROI', 'Dato'].forEach(x => hr.appendChild(el('th', '', x))); t.appendChild(hr);
@@ -175,6 +182,51 @@ export function mountTools(root, ctx) {
       const c = el('td'); c.appendChild(chip(freshness(f.oldest * 60000))); tr.appendChild(c); t.appendChild(tr); });
     const w = el('div', 'tablewrap'); w.appendChild(t); o.appendChild(w);
     o.appendChild(el('p', 'hint', fmt(r.stats.pairs) + ' pares revisados: ' + fmt(r.out.length) + ' con datos frescos, ' + fmt(r.stats.noData) + ' sin precio, ' + fmt(r.stats.tooOld) + ' con datos de más de 24 h. Compras al instante (orden de venta más barata) y vendes al instante a la orden de compra más alta, con impuesto ' + r.taxPct + ' %. Sin transporte ni tiempo.'));
+  }
+
+  // ---------- Runas, almas y reliquias ----------
+  const ENCH_CATS = [['weapons', 'Armas'], ['armor', 'Armaduras'], ['head', 'Cascos'], ['shoes', 'Botas'], ['offhands', 'Secundarias'], ['capes', 'Capas'], ['bags', 'Bolsos']];
+  function drawMats() {
+    const c = el('section', 'card'); c.appendChild(el('h2', '', 'Runas, almas y reliquias'));
+    c.appendChild(el('p', 'hint', 'Ingresa el precio de cada material de encanto, o léelo de tu base / datos públicos. Con la cantidad que se gasta por objeto, la app calcula sola el costo de encantar y lo usa en «✨ Encantar». Los IDs vienen de la convención del juego (no de los datos del repo): si un material sale «sin dato», corrige su ID. Las cantidades por objeto no están en los datos de la app: las ingresas tú.'));
+    ui.mCity = select([['', 'La ciudad más barata (datos de menos de 24 h)']].concat(game.marketCities().filter(x => x !== 'Black Market').map(x => [x, x])), MS.city || '', () => { MS.city = ui.mCity.value; saveMS(); });
+    ui.mRead = el('button', 'primary', 'Leer precios de mi base'); ui.mMsg = el('span', 'msg'); ui.mRead.addEventListener('click', readMats); const row = el('div', 'row'); row.append(field('Ciudad', ui.mCity), ui.mRead, ui.mMsg); c.appendChild(row);
+    ui.mTier = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), String(MS.tier || E.tier), () => { MS.tier = +ui.mTier.value; saveMS(); drawMatsTable(); }); c.appendChild(field('Tier', ui.mTier));
+    ui.mTable = el('div'); c.appendChild(ui.mTable);
+    const d = el('details'); d.appendChild(el('summary', '', 'Cantidad que se gasta por objeto (según el tipo de objeto)'));
+    d.appendChild(el('p', 'hint', 'Cuántas runas (.1), almas (.2), reliquias (.3) o fragmentos (.4) gasta cada objeto al encantarlo. Míralo en el juego, en la ventana de encantamiento. Déjalo vacío si no lo sabes: el costo quedará como «falta la cantidad».'));
+    const t = el('table'), hr = el('tr'); ['Tipo', '→ .1 Runa', '→ .2 Alma', '→ .3 Reliquia', '→ .4 Fragmento'].forEach(x => hr.appendChild(el('th', '', x))); t.appendChild(hr);
+    ENCH_CATS.forEach(([k, n]) => { const tr = el('tr'); tr.appendChild(el('td', '', n)); [1, 2, 3, 4].forEach(l => { const td = el('td'), i = input(MS.qty[k] && MS.qty[k][l] ? String(MS.qty[k][l]) : '', () => { MS.qty[k] = MS.qty[k] || {}; MS.qty[k][l] = num(i.value); saveMS(); drawMatsCost(); }, { inputMode: 'numeric', placeholder: '—' }); i.style.width = '72px'; td.appendChild(i); tr.appendChild(td); }); t.appendChild(tr); });
+    const w = el('div', 'tablewrap'); w.appendChild(t); d.appendChild(w); c.appendChild(d);
+    ui.mCost = el('div'); c.appendChild(ui.mCost); ui.body.appendChild(c); drawMatsTable(); drawMatsCost();
+  }
+  const mTier = () => +(ui.mTier ? ui.mTier.value : (MS.tier || E.tier));
+  function drawMatsTable() {
+    const tier = mTier(); ui.mTable.replaceChildren(); const t = el('table'), hr = el('tr'); ['Material', 'ID', 'Precio', 'Origen'].forEach(x => hr.appendChild(el('th', '', x))); t.appendChild(hr);
+    KINDS.forEach(k => { const slot = slotKey(k, tier), tr = el('tr'); tr.appendChild(el('td', '', k.short + (k.perTier ? ' T' + tier : '')));
+      const idI = input(MS.ids[slot] || defaultId(k, tier), () => { MS.ids[slot] = idI.value.trim(); saveMS(); }, { autocomplete: 'off' }); idI.style.minWidth = '150px'; const a = el('td'); a.appendChild(idI); tr.appendChild(a);
+      const prI = input(MS.prices[slot] ? fmt(MS.prices[slot]) : '', () => { MS.prices[slot] = num(prI.value); MS.src[slot] = { by: 'manual' }; saveMS(); org.textContent = 'manual'; drawMatsCost(); }, { inputMode: 'numeric', placeholder: 'silver' }); prI.style.width = '110px'; const b = el('td'); b.appendChild(prI); tr.appendChild(b);
+      const org = el('td', 'sub', srcText(MS.src[slot])); tr.appendChild(org); t.appendChild(tr); });
+    const w = el('div', 'tablewrap'); w.appendChild(t); ui.mTable.appendChild(w);
+  }
+  const srcText = s => !s ? '—' : s.by === 'manual' ? 'manual' : (s.src || '') + ' · ' + (s.city || '') + ' · ' + ageText(s.age);
+  function drawMatsCost() {
+    ui.mCost.replaceChildren(el('h3', '', 'Costo de encantar por objeto (T' + mTier() + ')'));
+    const t = el('table'), hr = el('tr'); ['Tipo', '.1', '.2', '.3', '.4'].forEach(x => hr.appendChild(el('th', '', x))); t.appendChild(hr);
+    ENCH_CATS.forEach(([k, n]) => { const c = enchantCosts(MS, mTier(), k), tr = el('tr'); tr.appendChild(el('td', '', n)); [1, 2, 3, 4].forEach(l => { const d = c.detail[l - 1]; tr.appendChild(el('td', d.cost == null ? 'sub' : '', d.cost == null ? d.why : fmt(d.cost))); }); t.appendChild(tr); });
+    const w = el('div', 'tablewrap'); w.appendChild(t); ui.mCost.appendChild(w); ui.mCost.appendChild(el('p', 'hint', 'Costo = cantidad por objeto × precio del material. En «✨ Encantar» se usa solo (tier y tipo que elijas allí) cuando no escribes un costo a mano.'));
+  }
+  async function readMats() {
+    if (noSrc()) { ui.mMsg.className = 'msg err'; ui.mMsg.textContent = 'Conecta tu base o activa los datos públicos en Configuración.'; return; }
+    const tier = mTier(), city = ui.mCity.value, cities = city ? [city] : game.marketCities().filter(x => x !== 'Black Market'), ids = KINDS.map(k => (MS.ids[slotKey(k, tier)] || defaultId(k, tier)));
+    ui.mRead.disabled = true; ui.mMsg.className = 'msg'; ui.mMsg.textContent = 'Leyendo…';
+    try {
+      const r = await ctx.getSrc().prices([...new Set(ids)], cities, [1]), errs = [r.ownError && 'Tu base: ' + r.ownError, r.pubError && 'Datos públicos: ' + r.pubError].filter(Boolean); let got = 0, miss = [];
+      KINDS.forEach((k, i) => { const slot = slotKey(k, tier), b = cheapest(r.rows.filter(x => x.item_id === ids[i])); if (b) { MS.prices[slot] = b.price; MS.src[slot] = { by: 'base', src: b.src, city: b.city, age: b.age }; got++; } else miss.push(k.short); });
+      saveMS(); drawMatsTable(); drawMatsCost();
+      ui.mMsg.className = errs.length || miss.length ? 'msg err' : 'msg ok'; ui.mMsg.textContent = got + ' de ' + KINDS.length + ' leídos' + (miss.length ? '. Sin dato: ' + miss.join(', ') + ' (revisa el ID o escribe el precio)' : '') + (errs.length ? ' · ' + errs.join(' · ') : '');
+    } catch (e) { ui.mMsg.className = 'msg err'; ui.mMsg.textContent = errText(e); }
+    ui.mRead.disabled = false;
   }
 
   // ---------- Oro ----------

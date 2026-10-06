@@ -88,3 +88,18 @@ t('memoria compartida: la 2.ª lectura no vuelve a consultar; con error no se gu
   const bad = { on: () => true, prices: async () => { calls++; return []; }, stats: { lastError: 'x' } }, s2 = makeSources({ usePublic: true }, { own: { on: () => false }, pub: bad });
   const c0 = calls; await s2.prices(['T4_BAG'], ['Lymhurst'], [1]); await s2.prices(['T4_BAG'], ['Lymhurst'], [1]); eq(calls - c0, 2);
 });
+
+import { enchantCosts, cheapest, matIds, defaultId, KINDS, slotKey } from '../tools/enchantcost.js';
+t('costo de encantar: cantidad × precio; sin cantidad o sin precio = desconocido, no 0', () => {
+  const st = { prices: { rune6: 1000, soul6: 4000 }, qty: { weapons: { 1: 96, 2: 96 } } };
+  const c = enchantCosts(st, 6, 'weapons'); eq([c[1], c[2], c[3], c[4]], [96000, 384000, null, null]);
+  eq(c.detail[2].why, 'falta la cantidad por objeto'); eq(enchantCosts({ prices: { relic6: 5 }, qty: { armor: { 3: 10 } } }, 6, 'armor')[3], 50);
+  eq(enchantCosts({ prices: {}, qty: { weapons: { 1: 5 } } }, 6, 'weapons').detail[0].why, 'falta el precio');
+});
+t('materiales de encanto: ids editables, fragmento sin tier, por tier las demás', () => {
+  eq(defaultId(KINDS[0], 7), 'T7_RUNE'); eq(slotKey(KINDS[3], 8), 'shard'); eq(matIds({ ids: { rune5: 'T5_OTRA' } }, 5)[0], 'T5_OTRA'); eq(matIds({}, 5).length, 4);
+});
+t('lectura: elige el precio más barato con datos de menos de 24 h', () => {
+  const rows = [{ city: 'A', sell: { price: 500, age_min: 3000, src: 'propio' } }, { city: 'B', sell: { price: 900, age_min: 10, src: 'público' } }, { city: 'C', sell: { price: 700, age_min: 20, src: 'propio' } }, { city: 'D', sell: { price: 0, age_min: 1 } }];
+  eq(cheapest(rows), { price: 700, city: 'C', age: 20, src: 'propio' }); eq(cheapest([]), null);
+});
