@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<title>Profit God</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="dashboard/styles.css?v=0.1">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">◆</span> Profit God</div>
+  <span class="ver" id="ver">v0.1</span>
+</header>
+<main>
+  <section class="card" id="cConn">
+    <h2>Tu base de datos</h2>
+    <p class="hint">Dirección de tu Worker en Cloudflare y tu clave. Se guardan solo en este dispositivo.</p>
+    <label>Dirección<input id="url" type="url" inputmode="url" autocomplete="off" placeholder="https://mi-base.….workers.dev"></label>
+    <label>Clave<input id="key" type="password" autocomplete="off" placeholder="tu clave"></label>
+    <div class="row"><button id="btnTest" class="primary">Conectar</button><span id="connMsg" class="msg"></span></div>
+  </section>
+
+  <section class="card" id="cFresh" hidden>
+    <h2>Qué tan frescos están tus datos</h2>
+    <div id="fresh"></div>
+    <p class="hint" id="histNote"></p>
+  </section>
+
+  <section class="card" id="cCfg">
+    <h2>Mi configuración</h2>
+    <div class="grid">
+      <label>Silver disponible<input id="silver" type="text" inputmode="numeric" placeholder="6.000.000"></label>
+      <label>Tiempo disponible<select id="hours"></select></label>
+      <label>Ciudad actual<select id="city"></select></label>
+      <label>Nivel de riesgo<select id="risk"></select></label>
+      <label>Premium<select id="premium"><option value="0">NO</option><option value="1">SÍ</option></select></label>
+      <label>Focus<select id="focus"><option value="0">0 (sin Focus)</option></select></label>
+      <label>Tarifa de estación mín.<input id="feeMin" type="text" inputmode="numeric"></label>
+      <label>Tarifa de estación máx.<input id="feeMax" type="text" inputmode="numeric"></label>
+    </div>
+    <p class="hint">Sin Premium y sin Focus es tu escenario base. Premium o Focus solo se usarán como comparación, nunca para recomendarte operaciones. La tarifa de estación la ajustas al fabricar.</p>
+  </section>
+
+  <section class="card" id="cRecent" hidden>
+    <h2>Lo último que capturaste</h2>
+    <div class="row"><label class="inline">Ciudad<select id="rcCity"></select></label><button id="btnRefresh">Actualizar</button></div>
+    <div id="recent" class="list"></div>
+  </section>
+</main>
+
+<dialog id="dlg"><div id="dlgBody"></div><div class="row end"><button id="dlgClose">Cerrar</button></div></dialog>
+<script type="module" src="dashboard/app.js?v=0.1"></script>
+</body>
+</html>

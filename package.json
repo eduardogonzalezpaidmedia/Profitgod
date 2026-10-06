@@ -1,0 +1,9 @@
+{
+  "name": "profitgod",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Profit God — motor de decisiones económicas para Albion Online",
+  "type": "module",
+  "scripts": { "test": "node tests/run.mjs" },
+  "devDependencies": { "better-sqlite3": "^11.0.0" }
+}

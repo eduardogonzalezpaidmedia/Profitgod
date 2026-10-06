@@ -6,8 +6,19 @@ Motor de decisiones económicas para Albion Online. Aplicación aparte de [Silve
 
 ## Estado
 
-**Fase 0 · Diseño.** Este repositorio contiene por ahora el análisis y el plan, no código de la aplicación.
-Lee [`docs/DISENO.md`](docs/DISENO.md). La construcción empieza cuando el diseño esté aprobado.
+**Fase 1 · Datos y frescura (v0.1).** Diseño aprobado ([`docs/DISENO.md`](docs/DISENO.md)). Ya incluye:
+
+- Worker v2 con historial propio y rutas `/v2` ([`worker/worker.js`](worker/worker.js), guía en [`docs/WORKER.md`](docs/WORKER.md)).
+- App web (PWA) que se conecta a tu base, muestra la frescura de tus datos por ciudad, lo último que capturaste y el historial de cada objeto.
+- Configuración personal con los valores por defecto del diseño (sin Premium, sin Focus, tarifa de estación 300–900).
+
+Todavía no calcula profit ni recomienda: eso empieza en la Fase 2.
+
+## Usarla
+
+1. Actualiza tu Worker con [`docs/WORKER.md`](docs/WORKER.md).
+2. Abre la app, escribe la dirección de tu Worker y tu clave, y pulsa **Conectar**. Se guardan solo en ese dispositivo.
+3. Pruebas: `npm install && npm test` (16 pruebas del Worker y de la lógica de la app).
 
 ## Reglas del proyecto
 
