@@ -6,7 +6,7 @@ Motor de decisiones económicas para Albion Online. Aplicación aparte de [Silve
 
 ## Estado
 
-**Fase 3 · Refinado y estrategias (v0.3, en vista previa).** Sobre la calculadora (v0.2) y los datos y frescura (v0.1). Diseño aprobado ([`docs/DISENO.md`](docs/DISENO.md)). Ya incluye:
+**Fase 3 · Refinado y estrategias (v0.3).** Sobre la calculadora (v0.2) y los datos y frescura (v0.1). Diseño aprobado ([`docs/DISENO.md`](docs/DISENO.md)). Ya incluye:
 
 - Worker v2 con historial propio y rutas `/v2` ([`worker/worker.js`](worker/worker.js), guía en [`docs/WORKER.md`](docs/WORKER.md)).
 - App web (PWA) que se conecta a tu base, muestra la frescura de tus datos por ciudad, lo último que capturaste y el historial de cada objeto.
