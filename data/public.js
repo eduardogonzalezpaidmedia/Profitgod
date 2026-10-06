@@ -1,5 +1,5 @@
 // Datos públicos de Albion Data Project (AODP). Respeta los límites de la API: consultas agrupadas, caché y espera ante 429.
-import { fromPublic } from './merge.js?v=0.7';
+import { fromPublic } from './merge.js?v=0.8';
 
 const HOSTS = { americas: 'https://west.albion-online-data.com', europe: 'https://europe.albion-online-data.com', asia: 'https://east.albion-online-data.com' };
 export const SERVERS = [['americas', 'Américas'], ['europe', 'Europa'], ['asia', 'Asia']];
@@ -51,10 +51,16 @@ export function makePublic(cfg, deps = {}) {
     await Promise.all([worker(), worker()]);
     return out;
   }
+  /** Historial del precio del oro (últimos `count` registros). Lanza error si la API no responde. */
+  async function gold(count) {
+    if (!on()) throw new Error('Los datos públicos están desactivados en Configuración.');
+    try { return await one(base + '/api/v2/stats/gold?count=' + (count || 240)); }
+    catch (e) { throw new Error(e && e.message === 'Failed to fetch' ? 'El navegador no pudo leer los datos públicos (red o CORS).' : (e && e.message) || String(e)); }
+  }
   async function test() {
     stats.lastError = null;
     try { const raw = await one(url(['T4_BAG'], ['Caerleon'], [1])); return { ok: true, rows: raw.length }; }
     catch (e) { return { ok: false, error: e && e.message === 'Failed to fetch' ? 'El navegador no pudo leer los datos públicos (red o CORS). Prueba configurar un proxy.' : (e && e.message) || String(e) }; }
   }
-  return { on, prices, test, stats, host: base, chunk, _url: url };
+  return { on, prices, gold, test, stats, host: base, chunk, _url: url };
 }

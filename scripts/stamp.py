@@ -4,7 +4,7 @@ Sin esto, GitHub Pages (caché de ~10 min) puede mezclar módulos nuevos con vie
 Uso: python3 scripts/stamp.py 0.7"""
 import re, sys, pathlib
 ver = sys.argv[1]; root = pathlib.Path(__file__).resolve().parent.parent
-dirs = ['dashboard', 'data', 'flipping', 'black-market', 'crafting', 'profit-engine', 'refining', 'settings', 'markets', 'opportunity-engine', 'history']
+dirs = ['dashboard', 'data', 'flipping', 'black-market', 'crafting', 'profit-engine', 'refining', 'settings', 'markets', 'opportunity-engine', 'history', 'tools']
 imp = re.compile(r"(from\s+'(?:\.{1,2}/)[^'?]+?\.js)(\?v=[\d.]+)?'")
 for d in dirs:
     for f in (root / d).glob('*.js'):

@@ -93,3 +93,11 @@ dialog{max-height:calc(100vh - 24px);overflow:auto}
 }
 .mv.warn,.dsv.warn,.mv.bad,.mv.ok{border:0;background:none;padding:0;margin:0;font-size:inherit;border-radius:0}
 .ty{white-space:nowrap;font-size:11px}.optop{flex-wrap:wrap}
+
+/* herramientas */
+.subtabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px}
+.subtabs button{flex:0 0 auto;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--mute);font-size:14px}
+.subtabs button.on{background:var(--acc);border-color:var(--acc);color:#1a1405;font-weight:600}
+.chart{width:100%;height:auto;display:block;margin:10px 0;background:var(--card);border:1px solid var(--line);border-radius:10px}
+section.card h3{margin:16px 0 6px;font-size:15px}
+@media (max-width:640px){.tabs a span{font-size:9.5px}}

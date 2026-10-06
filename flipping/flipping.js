@@ -1,6 +1,6 @@
 // Flipping: comprar barato en una ciudad, llevarlo y venderlo caro en otra. Funciones puras (sin red ni DOM).
 // Solo usa precios y órdenes que tu base ya tiene; nada se inventa.
-import { LIQUIDITY } from './config.js?v=0.7';
+import { LIQUIDITY } from './config.js?v=0.8';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 

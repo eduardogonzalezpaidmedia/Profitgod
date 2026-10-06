@@ -8,14 +8,14 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<link rel="stylesheet" href="dashboard/styles.css?v=0.7">
+<link rel="stylesheet" href="dashboard/styles.css?v=0.8">
 </head>
 <body>
 <header class="top">
   <div class="brand"><span class="logo">◆</span> Profit God</div>
-  <span class="ver" id="ver">v0.7</span>
+  <span class="ver" id="ver">v0.8</span>
 </header>
-<nav class="tabs"><a href="#inicio" class="on"><i>🏠</i><span>Inicio</span></a><a href="#mercado"><i>📊</i><span>Mercado</span></a><a href="#calc"><i>🧮</i><span>Calculadora</span></a><a href="#estrategias"><i>📈</i><span>Estrategias</span></a><a href="#operaciones"><i>💰</i><span>Operaciones</span></a><a href="#config"><i>⚙️</i><span>Config.</span></a></nav>
+<nav class="tabs"><a href="#inicio" class="on"><i>🏠</i><span>Inicio</span></a><a href="#mercado"><i>📊</i><span>Mercado</span></a><a href="#calc"><i>🧮</i><span>Calculadora</span></a><a href="#estrategias"><i>📈</i><span>Estrategias</span></a><a href="#herramientas"><i>🧰</i><span>Más</span></a><a href="#operaciones"><i>💰</i><span>Operaciones</span></a><a href="#config"><i>⚙️</i><span>Config.</span></a></nav>
 <main id="viewInicio"></main>
 <main id="viewMercado" hidden>
   <section class="card"><h2>Estado de tus datos</h2><p class="hint">Aquí ves qué tan frescos están los precios que capturaste con el programa del PC, ciudad por ciudad, y lo último que pasaste por el mercado del juego. Conecta tu base en Configuración.</p></section>
@@ -78,9 +78,10 @@
 </main>
 <main id="viewCalc" hidden></main>
 <main id="viewStrat" hidden></main>
+<main id="viewTools" hidden></main>
 <main id="viewOps" hidden></main>
 
 <dialog id="dlg"><div id="dlgBody"></div><div class="row end"><button id="dlgClose">Cerrar</button></div></dialog>
-<script type="module" src="dashboard/app.js?v=0.7"></script>
+<script type="module" src="dashboard/app.js?v=0.8"></script>
 </body>
 </html>

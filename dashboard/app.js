@@ -1,18 +1,19 @@
-import { load, save } from '../data/store.js?v=0.7';
-import { makeApi } from '../data/api.js?v=0.7';
-import { ageText } from '../data/freshness.js?v=0.7';
-import { parseItem, fmt } from '../data/items.js?v=0.7';
-import { CITIES } from '../markets/cities.js?v=0.7';
-import { HOURS, RISKS } from '../settings/defaults.js?v=0.7';
+import { load, save } from '../data/store.js?v=0.8';
+import { makeApi } from '../data/api.js?v=0.8';
+import { ageText } from '../data/freshness.js?v=0.8';
+import { parseItem, fmt } from '../data/items.js?v=0.8';
+import { CITIES } from '../markets/cities.js?v=0.8';
+import { HOURS, RISKS } from '../settings/defaults.js?v=0.8';
 
-import { $, el, chip, num, numDec } from './dom.js?v=0.7';
-import { mountCalc } from './calc.js?v=0.7';
-import { mountStrat } from './strat.js?v=0.7';
-import { mountInicio } from './inicio.js?v=0.7';
-import { mountOps } from './ops.js?v=0.7';
-import { makeJournal } from '../data/journal.js?v=0.7';
-import { makeSources } from '../data/sources.js?v=0.7';
-import { SERVERS } from '../data/public.js?v=0.7';
+import { $, el, chip, num, numDec } from './dom.js?v=0.8';
+import { mountCalc } from './calc.js?v=0.8';
+import { mountStrat } from './strat.js?v=0.8';
+import { mountInicio } from './inicio.js?v=0.8';
+import { mountOps } from './ops.js?v=0.8';
+import { mountTools } from './tools.js?v=0.8';
+import { makeJournal } from '../data/journal.js?v=0.8';
+import { makeSources } from '../data/sources.js?v=0.8';
+import { SERVERS } from '../data/public.js?v=0.8';
 let cfg = load(), api = makeApi(cfg), src = makeSources(cfg);
 
 function fillSelect(sel, items, cur, label) { sel.replaceChildren(); items.forEach(v => { const o = el('option', '', label ? label(v) : v); o.value = v; sel.appendChild(o); }); sel.value = cur; }
@@ -94,16 +95,24 @@ const journal = makeJournal(store);
 /** Cambia la configuración desde otra pantalla (Inicio) y deja todo sincronizado. */
 function update(patch) { Object.assign(cfg, patch); save(cfg); api = makeApi(cfg); src = makeSources(cfg); initForm(); }
 const C = { getCfg: () => cfg, getApi: () => api, getSrc: () => src, update, journal };
-const inicio = mountInicio($('viewInicio'), C), ops = mountOps($('viewOps'), C);
-const VIEWS = { inicio: 'viewInicio', mercado: 'viewMercado', calc: 'viewCalc', estrategias: 'viewStrat', operaciones: 'viewOps', config: 'viewConfig' };
+const inicio = mountInicio($('viewInicio'), C), ops = mountOps($('viewOps'), C), tools = mountTools($('viewTools'), C);
+const VIEWS = { inicio: 'viewInicio', mercado: 'viewMercado', calc: 'viewCalc', estrategias: 'viewStrat', herramientas: 'viewTools', operaciones: 'viewOps', config: 'viewConfig' };
 const OLD = { '#datos': '#config', '#hoy': '#inicio', '#flipping': '#inicio' };      // enlaces de versiones anteriores
 function route() {
   if (OLD[location.hash]) { history.replaceState(null, '', location.pathname + location.search + OLD[location.hash]); }
   const v = VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'inicio';
   Object.entries(VIEWS).forEach(([k, id]) => { $(id).hidden = k !== v; });
   document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v));
-  if (v === 'inicio') inicio.show(); if (v === 'calc') calc.show(); if (v === 'estrategias') strat.show(); if (v === 'operaciones') ops.show(); if (v === 'mercado' && api.on() && !$('fresh').childElementCount) connect();
+  if (v === 'inicio') inicio.show(); if (v === 'calc') calc.show(); if (v === 'estrategias') strat.show(); if (v === 'herramientas') tools.show(); if (v === 'operaciones') ops.show(); if (v === 'mercado' && api.on() && !$('fresh').childElementCount) connect();
   window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', route); route();
+// atajos de teclado: Alt+1…7 cambian de pestaña (no se activan mientras escribes)
+const ORDER = ['inicio', 'mercado', 'calc', 'estrategias', 'herramientas', 'operaciones', 'config'];
+window.addEventListener('keydown', e => {
+  if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  const t = e.target, typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+  const m = /^Digit([1-7])$/.exec(e.code); if (!m || typing) return;
+  e.preventDefault(); location.hash = '#' + ORDER[+m[1] - 1];
+});
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

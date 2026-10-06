@@ -1,5 +1,5 @@
 // Modelo unificado de oportunidad: flipping, fabricación, refinado y Mercado Negro producen el mismo objeto y compiten en un solo ranking.
-import { confidence, divergenceValue } from './confidence.js?v=0.7';
+import { confidence, divergenceValue } from './confidence.js?v=0.8';
 const isNum = v => typeof v === 'number' && isFinite(v);
 const r0 = v => isNum(v) ? Math.round(v) : null;
 const fmt = n => Math.round(n).toLocaleString('es-CL');
