@@ -101,3 +101,6 @@ dialog{max-height:calc(100vh - 24px);overflow:auto}
 .chart{width:100%;height:auto;display:block;margin:10px 0;background:var(--card);border:1px solid var(--line);border-radius:10px}
 section.card h3{margin:16px 0 6px;font-size:15px}
 @media (max-width:640px){.tabs a span{font-size:9.5px}}
+
+.tag.cross{background:#10243a;color:#7cc4ff;border-color:#1d4a73}
+.crossbox{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:10px 0;padding:10px 12px;border:1px solid #1d4a73;background:#0e1c2c;border-radius:12px;font-size:14px}

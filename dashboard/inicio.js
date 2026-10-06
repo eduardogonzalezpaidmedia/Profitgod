@@ -1,13 +1,13 @@
 // Inicio: tu situación → ENCONTRAR PROFIT → ranking de oportunidades → detalle explicado. Una sola pantalla para lo principal.
-import { $, el, chip, field, select, input, num } from './dom.js?v=0.9';
-import { loadGameData, CATEGORY_LABEL } from '../crafting/recipes.js?v=0.9';
-import { findProfit } from '../opportunity-engine/engine.js?v=0.9';
-import { TYPE_LABEL } from '../opportunity-engine/opportunity.js?v=0.9';
-import { freshness } from '../data/freshness.js?v=0.9';
-import { fmt } from '../data/items.js?v=0.9';
-import { CITIES } from '../markets/cities.js?v=0.9';
-import { HOURS } from '../settings/defaults.js?v=0.9';
-import { kv } from './explain.js?v=0.9';
+import { $, el, chip, field, select, input, num } from './dom.js?v=0.10';
+import { loadGameData, CATEGORY_LABEL } from '../crafting/recipes.js?v=0.10';
+import { findProfit } from '../opportunity-engine/engine.js?v=0.10';
+import { TYPE_LABEL } from '../opportunity-engine/opportunity.js?v=0.10';
+import { freshness } from '../data/freshness.js?v=0.10';
+import { fmt } from '../data/items.js?v=0.10';
+import { CITIES } from '../markets/cities.js?v=0.10';
+import { HOURS } from '../settings/defaults.js?v=0.10';
+import { kv } from './explain.js?v=0.10';
 
 const hlabel = h => h < 1 ? h * 60 + ' minutos' : h + (h === 1 ? ' hora' : ' horas');
 const pc = (n, d = 1) => n === null || n === undefined ? '—' : n.toFixed(d).replace('.', ',') + '%';
@@ -21,7 +21,7 @@ const minTxt = m => m < 1 ? 'menos de 1 min' : m < 120 ? Math.round(m) + ' min' 
 const confCls = c => c >= 80 ? 'ok' : c >= 50 ? 'warn' : 'bad';
 
 export function mountInicio(root, ctx) {
-  let game = null, built = false, last = null, shown = 20, F = { type: '', risk: '', city: '', cap: '', profit: '', roi: '', pph: '', liq: '', conf: '', sort: 'score' }; const ui = {};
+  let game = null, built = false, last = null, shown = 20, F = { route: '', type: '', risk: '', city: '', cap: '', profit: '', roi: '', pph: '', liq: '', conf: '', sort: 'score' }; const ui = {};
 
   async function show() {
     if (!built) {
@@ -82,13 +82,16 @@ export function mountInicio(root, ctx) {
     const adv = el('details'); adv.appendChild(el('summary', '', 'Opciones avanzadas: ampliar con datos públicos'));
     const g2 = el('div', 'grid'); ui.cat = select([['', 'Ninguno']].concat(Object.entries(CATEGORY_LABEL).filter(([k]) => ['weapons', 'armor', 'head', 'shoes', 'offhands', 'capes', 'bags'].includes(k))), '');
     ui.tmin = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), 4); ui.tmax = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), 6);
-    g2.append(field('Categoría a revisar', ui.cat), field('Tier desde', ui.tmin), field('Tier hasta', ui.tmax)); adv.appendChild(g2);
+    ui.scope = select([['normal', 'Normal'], ['all', '🌐 Todos los mercados: todos los objetos T4–T8 en todas las ciudades']], 'normal');
+    g2.append(field('Alcance', ui.scope), field('Categoría a revisar (solo en alcance Normal)', ui.cat), field('Tier desde', ui.tmin), field('Tier hasta', ui.tmax)); adv.appendChild(g2);
     adv.appendChild(el('p', 'hint', 'Sin esto solo se analizan los objetos que ya pasaste por el mercado del juego (más los precios públicos de esos mismos objetos). Con esto también se consultan los públicos de esa categoría (máx. 600 objetos, calidad normal) para descubrir oportunidades; no traen cantidades, así que salen marcadas «cantidad no verificada» y con menos confianza.'));
     c.appendChild(adv); root.appendChild(c);
     ui.out = el('div'); root.appendChild(ui.out);
     refreshSituation();
   }
 
+  /** «Todos los mercados»: todos los objetos T4–T8 sin encanto que se pueden comprar o vender (calidad normal). */
+  const ALL_IDS = () => game.items.filter(i => i.tier >= 4 && i.enchantment === 0 && !/^QUESTITEM|^UNIQUE_/.test(i.item_id)).map(i => i.item_id);
   // ---------- análisis ----------
   async function run() {
     const src = ctx.getSrc(), cfg = ctx.getCfg(), msg = t => { ui.msg.textContent = t; };
@@ -98,7 +101,8 @@ export function mountInicio(root, ctx) {
     ui.go.disabled = true; ui.go.textContent = 'Analizando el mercado…'; msg('Leyendo precios, calculando flipping, fabricación, refinado y Mercado Negro…');
     try {
       let extra = []; const cat = ui.cat.value, t1 = +ui.tmin.value, t2 = +ui.tmax.value;
-      if (cat) extra = game.items.filter(i => i.category === cat && i.tier >= t1 && i.tier <= t2 && i.enchantment === 0 && game.recipes.has(i.item_id)).map(i => i.item_id).slice(0, 600);
+      const all = ui.scope.value === 'all'; if (all) { extra = ALL_IDS(); msg('Leyendo TODOS los mercados (' + fmt(extra.length) + ' objetos en ' + game.marketCities().length + ' ciudades). Puede tardar 1–2 minutos…'); }
+      else if (cat) extra = game.items.filter(i => i.category === cat && i.tier >= t1 && i.tier <= t2 && i.enchantment === 0 && game.recipes.has(i.item_id)).map(i => i.item_id).slice(0, 600);
       last = await findProfit({ src, game, cfg, silver: cfg.silver, hours: cfg.hours, maxRisk: RISKU[cfg.risk] || 'BAJO', extra }); shown = 20;
       const errs = last.info.errs;
       if (errs.length) ui.alert.appendChild(banner('⚠️ No pudimos actualizar todos tus datos.', errs.join(' · ').replace(/Failed to fetch/g, 'no se pudo conectar') + ' ' + lastText() + ' Se usó lo que sí se pudo leer.', [['REINTENTAR', run, 'primary']].concat(cfg.usePublic ? [] : [['USAR DATOS PÚBLICOS', usePublic]])));
@@ -117,7 +121,7 @@ export function mountInicio(root, ctx) {
   function applyFilters() {
     const cap = num(F.cap), mp = num(F.profit), mr = num(F.roi), mh = num(F.pph), mc = num(F.conf);
     const LQ = ['MUY BAJA', 'BAJA', 'MEDIA', 'ALTA', 'MUY ALTA'], RK = { BAJO: 0, MEDIO: 1, ALTO: 2 };
-    const l = last.ops.filter(o => o.score !== null && (!F.type || o.type === F.type) && (!F.risk || RK[o.risk] <= RK[F.risk]) && (!F.city || o.cityBuy === F.city || o.citySell === F.city) && (!cap || o.investment <= cap) && o.profit >= mp && (o.roi === null || o.roi >= mr)
+    const l = last.ops.filter(o => o.score !== null && (!F.type || o.type === F.type) && (!F.risk || RK[o.risk] <= RK[F.risk]) && (!F.route || o.cityBuy !== o.citySell) && (!F.city || o.cityBuy === F.city || o.citySell === F.city) && (!cap || o.investment <= cap) && o.profit >= mp && (o.roi === null || o.roi >= mr)
       && (o.profitPerHour || 0) >= mh && (!F.liq || LQ.indexOf(o.liquidity) >= LQ.indexOf(F.liq)) && o.confidence >= mc);
     const key = { score: o => o.score, profit: o => o.profit, roi: o => o.roi || 0, pph: o => o.profitPerHour || 0, conf: o => o.confidence }[F.sort];
     return l.sort((a, b) => key(b) - key(a));
@@ -129,6 +133,7 @@ export function mountInicio(root, ctx) {
     const cities = [...new Set(last.ops.flatMap(o => [o.cityBuy, o.citySell]))].sort();
     g.append(field('Ordenar por', sel('sort', [['score', 'Profit Score'], ['profit', 'Profit'], ['roi', 'ROI'], ['pph', 'Profit por hora'], ['conf', 'Confianza']])),
       field('Tipo', sel('type', [['', 'Todos'], ['flipping', 'Flipping'], ['crafting', 'Crafting'], ['refining', 'Refining'], ['blackmarket', 'Black Market']])),
+      field('Ruta', sel('route', [['', 'Todas'], ['otra', '🔀 Solo comprar en una ciudad y vender en otra']])),
       field('Riesgo máximo', sel('risk', [['', 'Cualquiera'], ['MEDIO', 'Hasta medio'], ['BAJO', 'Solo bajo']])), field('Ciudad', sel('city', [['', 'Todas']].concat(cities.map(x => [x, x])))),
       field('Capital máximo', inp('cap', 'sin límite')), field('Profit mínimo', inp('profit', '0')), field('ROI mínimo %', inp('roi', '0')), field('Profit/h mínimo', inp('pph', '0')),
       field('Liquidez mínima', sel('liq', [['', 'Cualquiera'], ['BAJA', 'Baja o más'], ['MEDIA', 'Media o más'], ['ALTA', 'Alta o más']])), field('Confianza mínima %', sel('conf', [['', 'Cualquiera'], ['50', '50 % o más'], ['80', '80 % o más']])));
@@ -139,6 +144,8 @@ export function mountInicio(root, ctx) {
     ui.out.replaceChildren();
     const h = el('div', 'rh'); h.appendChild(el('h2', '', '🔥 MEJORES OPORTUNIDADES')); h.appendChild(el('span', 'hint', fmt(list.length) + ' de ' + fmt(last.ops.length))); ui.out.appendChild(h);
     if (!last.ops.length) { ui.out.appendChild(banner('No hay suficiente información para recomendar.', 'No encontré operaciones con ganancia y datos de menos de 24 horas. Pasa por más mercados del juego con el programa del PC, activa los datos públicos o amplía la búsqueda con una categoría.', [])); return; }
+    const cross = last.ops.filter(o => o.score !== null && o.cityBuy !== o.citySell);
+    if (cross.length) { const b = el('div', 'crossbox'); b.appendChild(el('span', '', '🔀 ' + fmt(cross.length) + ' oportunidades compran en una ciudad y venden en otra (incluye Mercado Negro y lo que fabricas).')); const bt = el('button', '', F.route ? 'Ver todas' : 'Ver solo esas'); bt.addEventListener('click', () => { F.route = F.route ? '' : 'otra'; shown = 20; draw(true); }); b.appendChild(bt); ui.out.appendChild(b); }
     const flt = filtersUi(); if (hadFlt) flt.open = true; flt.addEventListener('toggle', () => { ui.fltOpen = flt.open; }); ui.out.appendChild(flt);
     const plan = planCard(); if (plan) ui.out.appendChild(plan);
     if (!list.length) ui.out.appendChild(el('div', 'warn', 'Ninguna oportunidad pasa los filtros que pusiste. Afloja los filtros.'));
@@ -157,7 +164,7 @@ export function mountInicio(root, ctx) {
     const g = el('div', 'metrics'); g.append(metric('ROI', pc(o.roi)), metric('Profit/h (est.)', o.profitPerHour != null ? fmt(o.profitPerHour) : '—'), metric('Capital', fmt(o.investment)), metric('Tiempo (est.)', minTxt(o.minutes)),
       metric('Riesgo', o.risk[0] + o.risk.slice(1).toLowerCase(), RISK_CLS[o.risk]), metric('Liquidez', o.liquidity === 'SIN DATO' ? 'Sin dato' : o.liquidity[0] + o.liquidity.slice(1).toLowerCase()), metric('Confianza', o.confidenceInfo.icon + ' ' + o.confidence + '%', confCls(o.confidence)));
     c.appendChild(g);
-    const m = el('div', 'm'); m.appendChild(chip(freshness(o.dataAge * 60000))); o.sources.forEach(s => m.appendChild(el('span', 'tag ' + (s === 'propio' ? 'own' : 'pub'), s))); if (!o.depthKnown) m.appendChild(el('span', 'tag', 'cantidad no verificada')); if (o.withFocus) m.appendChild(el('span', 'tag', 'con Focus'));
+    const m = el('div', 'm'); if (o.cityBuy !== o.citySell) m.appendChild(el('span', 'tag cross', '🔀 Otra ciudad')); m.appendChild(chip(freshness(o.dataAge * 60000))); o.sources.forEach(s => m.appendChild(el('span', 'tag ' + (s === 'propio' ? 'own' : 'pub'), s))); if (!o.depthKnown) m.appendChild(el('span', 'tag', 'cantidad no verificada')); if (o.withFocus) m.appendChild(el('span', 'tag', 'con Focus'));
     if (o.anomalies.length) m.appendChild(el('span', 'tag warnt', '⚠ ' + o.anomalies.length + (o.anomalies.length === 1 ? ' aviso' : ' avisos'))); c.appendChild(m);
     const b = el('button', 'primary', 'VER OPERACIÓN'); b.addEventListener('click', () => detail(o, n)); c.appendChild(b); return c;
   }

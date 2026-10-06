@@ -1,9 +1,9 @@
 // Planificador de fabricación de varios ítems: lista de materiales total, costo, venta y ganancia por ítem.
 // Función pura. Precios: materiales se compran al instante (orden de venta más barata) en la ciudad de compra;
 // el producto se vende al instante a la orden de compra más alta (solo impuesto). Nada se inventa: sin precio → se avisa.
-import { craftBatch } from '../profit-engine/profit.js?v=0.9';
-import { rateFor } from '../profit-engine/scenario.js?v=0.9';
-import { sourceSummary } from '../data/merge.js?v=0.9';
+import { craftBatch } from '../profit-engine/profit.js?v=0.10';
+import { rateFor } from '../profit-engine/scenario.js?v=0.10';
+import { sourceSummary } from '../data/merge.js?v=0.10';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 const pos = v => isNum(v) && v > 0 ? v : null;

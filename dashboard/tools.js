@@ -1,13 +1,13 @@
 // Herramientas: planificador de varios ítems (con Cocina y Alquimia), flips de encanto, historial del oro y tablas de referencia.
-import { el, chip, field, select, input, num } from './dom.js?v=0.9';
-import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.9';
-import { planCrafts, plannerIds } from '../tools/planner.js?v=0.9';
-import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.9';
-import { goldStats } from '../tools/gold.js?v=0.9';
-import { priceCard, searchAny } from '../tools/pricecard.js?v=0.9';
-import { referenceTables } from '../tools/reference.js?v=0.9';
-import { freshness, ageText } from '../data/freshness.js?v=0.9';
-import { fmt } from '../data/items.js?v=0.9';
+import { el, chip, field, select, input, num } from './dom.js?v=0.10';
+import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.10';
+import { planCrafts, plannerIds } from '../tools/planner.js?v=0.10';
+import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.10';
+import { goldStats } from '../tools/gold.js?v=0.10';
+import { priceCard, searchAny } from '../tools/pricecard.js?v=0.10';
+import { referenceTables } from '../tools/reference.js?v=0.10';
+import { freshness, ageText } from '../data/freshness.js?v=0.10';
+import { fmt } from '../data/items.js?v=0.10';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
