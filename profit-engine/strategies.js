@@ -5,6 +5,7 @@
 // datos de más de 24 h no se recomiendan; solo venta INSTANT (la más prudente); Premium y Focus como los tengas configurados.
 import { craftBatch } from './profit.js';
 import { rateFor } from './scenario.js';
+import { sourceSummary } from '../data/merge.js';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 const pos = v => isNum(v) && v > 0 ? v : null;
@@ -30,7 +31,7 @@ export function compareStrategies(p) {
   // A) vender los materiales ahora
   const mk = p.market(p.buyCity, p.materialId) || {};
   const aInst = pos(mk.buy_max) ? { unit: mk.buy_max, net: Math.round(p.qty * mk.buy_max * (1 - taxPct / 100)), age: mk.buyAge } : null;
-  const A = { kind: 'Vender los materiales', label: game.label(p.materialId), value: aInst ? aInst.net : null, units: p.qty, unitPrice: aInst ? aInst.unit : null, oldest: aInst ? aInst.age : null, detail: 'Vendes a la orden de compra más alta en ' + p.buyCity + ', pagando solo el impuesto.' };
+  const A = { source: aInst ? mk.buySrc || null : null, kind: 'Vender los materiales', label: game.label(p.materialId), value: aInst ? aInst.net : null, units: p.qty, unitPrice: aInst ? aInst.unit : null, oldest: aInst ? aInst.age : null, detail: 'Vendes a la orden de compra más alta en ' + p.buyCity + ', pagando solo el impuesto.' };
 
   const options = [];
   for (const pid of game.usedIn(p.materialId)) {
@@ -44,11 +45,11 @@ export function compareStrategies(p) {
     let crafts = Math.floor(p.qty / needPer);
     if (crafts < 1) { stats.tooSmall++; continue; }
     // precios de los demás materiales (comprados al instante en la ciudad de compra)
-    const prices = {}, ages = []; let missing = false;
+    const prices = {}, ages = [], srcs = []; let missing = false;
     for (const m of recipe.materials) {
       if (m.item_id === p.materialId) continue;
       const q = p.market(p.buyCity, m.item_id), pr = q ? pos(q.sell_min) : null;
-      if (pr === null) { missing = true; break; } prices[m.item_id] = pr; if (isNum(q.sellAge)) ages.push(q.sellAge);
+      if (pr === null) { missing = true; break; } prices[m.item_id] = pr; srcs.push(q.sellSrc); if (isNum(q.sellAge)) ages.push(q.sellAge);
     }
     if (missing) { stats.noData++; continue; }
     // destinos de venta
@@ -75,7 +76,7 @@ export function compareStrategies(p) {
       got = true;
       const usedOwn = r.lines.find(l => l.item_id === p.materialId);
       options.push({ kind: d.kind, product: pid, label: game.label(pid), saleCity: d.city, crafts: c, units: r.made, unitPrice: sp, retorno: rr.rate, bonus: !!rr.bonusKind,
-        materialsUsed: Math.round(usedOwn.needed), leftover: Math.max(0, Math.round(p.qty - usedOwn.needed)), extraCost: r.totalCost, net: r.sale.net, value: Math.round(r.profit), oldest, limitedBySilver: c < crafts, calc: r });
+        materialsUsed: Math.round(usedOwn.needed), leftover: Math.max(0, Math.round(p.qty - usedOwn.needed)), extraCost: r.totalCost, net: r.sale.net, value: Math.round(r.profit), oldest, limitedBySilver: c < crafts, calc: r, source: sourceSummary([...srcs, sq.buySrc]) });
     }
     // cada receta cuenta una sola vez, en la primera categoría que le toca
     if (got) stats.evaluated++; else if (old) stats.tooOld++; else if (budget) stats.overBudget++; else stats.noData++;

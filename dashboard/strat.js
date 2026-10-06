@@ -46,19 +46,19 @@ export function mountStrat(root, ctx) {
   }
 
   async function run() {
-    const api = ctx.getApi(), qty = num(ui.qty.value), silver = num(ui.silver.value);
+    const api = ctx.getSrc(), qty = num(ui.qty.value), silver = num(ui.silver.value);
     if (!S.mat) { ui.msg.className = 'msg err'; ui.msg.textContent = 'Elige primero un material.'; return; }
     if (!qty) { ui.msg.className = 'msg err'; ui.msg.textContent = 'Escribe cuántos tienes.'; return; }
-    if (!api.on()) { ui.msg.className = 'msg err'; ui.msg.textContent = 'Conecta tu base en «Mis datos» para leer los precios.'; return; }
+    if (!api.usable()) { ui.msg.className = 'msg err'; ui.msg.textContent = 'Conecta tu base o activa los datos públicos en «Mis datos» para leer los precios.'; return; }
     ui.go.disabled = true; ui.msg.className = 'msg'; ui.msg.textContent = 'Leyendo precios de tu base…';
     try {
-      const ids = neededIds(game, S.mat, S.maxTier), cities = [...new Set([S.buyCity, S.saleCity, 'Black Market'])], map = new Map();
+      const ids = neededIds(game, S.mat, S.maxTier), cities = [...new Set([S.buyCity, S.saleCity, 'Black Market'])], map = new Map(); let errs = [];
       for (let i = 0; i < ids.length; i += 100) {
-        const r = await api.prices(ids.slice(i, i + 100), cities, [1]);
-        r.rows.forEach(x => map.set(x.city + '|' + x.item_id, { sell_min: x.sell.price, buy_max: x.buy.price, sellAge: x.sell.age_min, buyAge: x.buy.age_min }));
+        const r = await api.prices(ids.slice(i, i + 100), cities, [1]); if (r.ownError) errs.push('Tu base: ' + r.ownError); if (r.pubError) errs.push('Datos públicos: ' + r.pubError);
+        r.rows.forEach(x => map.set(x.city + '|' + x.item_id, { sell_min: x.sell.price, buy_max: x.buy.price, sellAge: x.sell.age_min, buyAge: x.buy.age_min, sellSrc: x.sell.src, buySrc: x.buy.src }));
       }
       last = compareStrategies({ game, materialId: S.mat, qty, silver, buyCity: S.buyCity, craftCity: S.craftCity, saleCity: S.saleCity, premium: S.premium, focus: S.focus, feePerCraft: num(S.fee), maxTier: S.maxTier, market: (c, id) => map.get(c + '|' + id) || null });
-      ui.msg.textContent = ''; draw(last, qty, silver);
+      ui.msg.className = errs.length ? 'msg err' : 'msg'; ui.msg.textContent = [...new Set(errs)].join(' · '); draw(last, qty, silver);
     } catch (e) { ui.msg.className = 'msg err'; ui.msg.textContent = e.message.includes('Failed to fetch') ? 'No se pudo conectar con tu base.' : e.message; }
     ui.go.disabled = false;
   }
@@ -74,9 +74,9 @@ export function mountStrat(root, ctx) {
     ui.out.appendChild(el('div', 'warn', 'Solo venta INSTANT (a la orden de compra más alta), sin transporte ni tiempo. Premium y Focus son los que marcaste: ' + (S.premium ? 'con Premium' : 'sin Premium') + ', ' + (S.focus ? 'con Focus' : 'sin Focus') + '.'));
     // opción A
     const t = el('table'), hr = el('tr'); ['Opción', 'Unid.', 'Valor', 'vs vender', 'Dato'].forEach(x => hr.appendChild(el('th', '', x))); t.appendChild(hr);
-    const tr0 = el('tr'); tr0.appendChild(el('td', '', 'Vender los materiales (' + S.buyCity + ')')); tr0.appendChild(el('td', '', fmt(qty))); tr0.appendChild(el('td', '', r.A.value === null ? 'Sin dato' : fmt(r.A.value))); tr0.appendChild(el('td', '', '—')); const c0 = el('td'); if (r.A.oldest != null) c0.appendChild(chip(freshness(r.A.oldest * 60000))); tr0.appendChild(c0); t.appendChild(tr0);
+    const tr0 = el('tr'); { const a0 = el('td'); a0.appendChild(document.createTextNode('Vender los materiales (' + S.buyCity + ')')); if (r.A.source) a0.appendChild(el('div', 'sub', 'fuente: ' + r.A.source)); tr0.appendChild(a0); } tr0.appendChild(el('td', '', fmt(qty))); tr0.appendChild(el('td', '', r.A.value === null ? 'Sin dato' : fmt(r.A.value))); tr0.appendChild(el('td', '', '—')); const c0 = el('td'); if (r.A.oldest != null) c0.appendChild(chip(freshness(r.A.oldest * 60000))); tr0.appendChild(c0); t.appendChild(tr0);
     r.options.slice(0, 12).forEach(o => {
-      const tr = el('tr'); const a = el('td'); a.appendChild(document.createTextNode(o.label)); a.appendChild(el('div', 'sub', o.kind + (o.saleCity === 'Black Market' ? '' : ' en ' + o.saleCity) + (o.bonus ? ' · bono de ciudad' : '') + (o.limitedBySilver ? ' · limitado por tu silver' : ''))); tr.appendChild(a);
+      const tr = el('tr'); const a = el('td'); a.appendChild(document.createTextNode(o.label)); a.appendChild(el('div', 'sub', o.kind + (o.saleCity === 'Black Market' ? '' : ' en ' + o.saleCity) + (o.bonus ? ' · bono de ciudad' : '') + (o.source ? ' · fuente: ' + o.source : '') + (o.limitedBySilver ? ' · limitado por tu silver' : ''))); tr.appendChild(a);
       tr.appendChild(el('td', '', fmt(o.units))); tr.appendChild(el('td', o.value < 0 ? 'neg' : '', fmt(o.value))); tr.appendChild(el('td', o.vsSell !== null && o.vsSell < 0 ? 'neg' : '', o.vsSell === null ? '—' : (o.vsSell >= 0 ? '+' : '') + fmt(o.vsSell)));
       const c = el('td'); c.appendChild(chip(freshness(o.oldest * 60000))); tr.appendChild(c); t.appendChild(tr);
     });

@@ -92,16 +92,16 @@ export function mountCalc(root, ctx) {
   // ---------- precios desde tu base ----------
   async function refreshPrices() {
     if (!S.itemId) return;
-    const api = ctx.getApi(), rec = game.recipe(S.itemId); S.market = {}; S.saleMarket = {}; S.buyProduct = null;
-    if (!api.on()) { S.priceMsg = 'Sin conexión a tu base: escribe los precios a mano (modo simulación) o conecta tu base en «Mis datos».'; return calc(true); }
+    const api = ctx.getSrc(), rec = game.recipe(S.itemId); S.market = {}; S.saleMarket = {}; S.buyProduct = null;
+    if (!api.usable()) { S.priceMsg = 'Sin fuente de precios: conecta tu base o activa los datos públicos en «Mis datos», o escribe los precios a mano (modo simulación).'; return calc(true); }
     S.priceBusy = true; S.priceMsg = 'Leyendo precios de tu base…'; calc(true);
     try {
       const mats = [...new Set(rec.materials.map(m => m.item_id))];
       const isRef = game.item(S.itemId).category === 'refined';
       const [pm, ps, pb] = await Promise.all([api.prices(mats, [S.buyCity], [1]), api.prices([S.itemId], [S.saleCity], [S.quality]), isRef ? api.prices([S.itemId], [S.buyCity], [S.quality]) : Promise.resolve(null)]);
-      const mk = r => ({ sell_min: r.sell.price, buy_max: r.buy.price, sellAge: r.sell.age_min, buyAge: r.buy.age_min });
+      const mk = r => ({ sell_min: r.sell.price, buy_max: r.buy.price, sellAge: r.sell.age_min, buyAge: r.buy.age_min, sellSrc: r.sell.src, buySrc: r.buy.src });
       pm.rows.forEach(r => { S.market[r.item_id] = mk(r); }); const sr = ps.rows[0]; S.saleMarket = sr ? mk(sr) : {}; if (pb) S.buyProduct = pb.rows[0] ? mk(pb.rows[0]) : {};
-      S.priceMsg = '';
+      S.priceMsg = [pm.ownError && 'Tu base: ' + pm.ownError, pm.pubError && 'Datos públicos: ' + pm.pubError].filter(Boolean).join(' · ');
     } catch (e) { S.priceMsg = e.message; }
     S.priceBusy = false; calc(true);
   }
@@ -126,7 +126,7 @@ export function mountCalc(root, ctx) {
     const kv = el('div', 'kv'); const kvi = (t, v) => { const d = el('div'); d.appendChild(el('small', '', t)); d.appendChild(el('b', '', v)); kv.appendChild(d); };
     kvi('ROI', r.roi === null ? '—' : pc(r.roi)); kvi('Silver/hora', r.silverPerHour === null ? '—' : fmt(r.silverPerHour)); kvi('Capital', r.totalCost === null ? '—' : fmt(r.totalCost));
     kvi('Unidades', fmt(r.made)); kvi('Retorno', e.base.rr.rate === null ? '—' : pc(e.base.rr.rate * 100, 2)); kvi('Impuesto de venta', e.base.taxPct + '%'); box.appendChild(kv);
-    const fresh = freshness(sc.oldestMinutes === null ? null : sc.oldestMinutes * 60000), line = el('div', 'row'); line.appendChild(el('span', 'hint', 'Dato más viejo usado: ')); line.appendChild(chip(fresh)); line.appendChild(el('span', 'hint', ' ' + ageText(sc.oldestMinutes)));
+    const fresh = freshness(sc.oldestMinutes === null ? null : sc.oldestMinutes * 60000), line = el('div', 'row'); line.appendChild(el('span', 'hint', 'Dato más viejo usado: ')); line.appendChild(chip(fresh)); line.appendChild(el('span', 'hint', ' ' + ageText(sc.oldestMinutes) + (sc.source ? ' · fuente: ' + sc.source : '')));
     box.appendChild(line);
     if (S.priceMsg) box.appendChild(el('div', 'warn', S.priceMsg));
     r.reasons.forEach(x => box.appendChild(el('div', 'warn bad', x)));
@@ -163,17 +163,17 @@ export function mountCalc(root, ctx) {
     t.appendChild(sale);
     const w = el('div', 'tablewrap'); w.appendChild(t);
     const reset = el('button', '', 'Restablecer precios de la base'); reset.addEventListener('click', () => { S.overrides = { instant: {}, order: {}, saleInstant: null, saleOrder: null }; calc(true); });
-    const d = el('details'); d.open = true; d.appendChild(el('summary', '', 'Precios usados (puedes cambiarlos para simular)')); d.append(w, el('p', 'hint', 'Los precios vienen de tu base. Si escribes otro valor, el cálculo lo usa y queda marcado como «simulado».'), reset);
+    const d = el('details'); d.open = true; d.appendChild(el('summary', '', 'Precios usados (puedes cambiarlos para simular)')); d.append(w, el('p', 'hint', 'Cada precio dice de dónde viene: «propio» (tu captura), «público» (Albion Data Project) o «simulado» (lo escribiste tú). Si hay de los dos, se usa el más reciente.'), reset);
     ui.mats.replaceChildren(d); updateMatSources(e);
   }
   function updateMatSources(e) {
     const rec = e.recipe, rows = ui.mats.querySelectorAll('tr'); let k = 1;
     rec.materials.forEach(m => ['instant', 'order'].forEach(mode => {
       const i = ui.matInputs[mode + m.item_id]; if (!i) return; const src = i.parentElement.querySelector('.src'), v = S.overrides[mode][m.item_id], sim = v != null;
-      src.textContent = sim ? 'simulado' : (i.dataset.auto === '' ? 'sin dato' : 'base'); src.className = 'src' + (sim ? ' sim' : '');
+      const lab = e.base[mode].priceSource[m.item_id]; src.textContent = lab; src.className = 'src' + (lab === 'simulado' ? ' sim' : lab === 'público' ? ' pub' : '');
     }));
     [['saleInstant', 'instant'], ['saleOrder', 'order']].forEach(([key, mode]) => { const i = ui.matInputs[key]; if (!i) return; const src = i.parentElement.querySelector('.src'), sim = S.overrides[key] != null;
-      src.textContent = i.disabled ? 'no aplica' : (sim ? 'simulado' : (i.dataset.auto === '' ? 'sin dato' : 'base')); src.className = 'src' + (sim ? ' sim' : ''); });
+      const lab = e.base[mode].saleSource; src.textContent = i.disabled ? 'no aplica' : lab; src.className = 'src' + (lab === 'simulado' ? ' sim' : lab === 'público' ? ' pub' : ''); });
   }
 
   function row(tb, label, val, cls, sub) { if (val === 0) val = 0; if (typeof val === 'number' && Object.is(val, -0)) val = 0; const tr = el('tr', cls || ''); tr.appendChild(el('td', sub ? 'sub' : '', label)); tr.appendChild(el('td', val !== null && typeof val === 'number' && val < 0 ? 'neg' : '', val === null ? '—' : typeof val === 'number' ? fmt(val) : val)); tb.appendChild(tr); }

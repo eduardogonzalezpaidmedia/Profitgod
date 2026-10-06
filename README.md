@@ -6,7 +6,7 @@ Motor de decisiones económicas para Albion Online. Aplicación aparte de [Silve
 
 ## Estado
 
-**Fase 3 · Refinado y estrategias (v0.3).** Sobre la calculadora (v0.2) y los datos y frescura (v0.1). Diseño aprobado ([`docs/DISENO.md`](docs/DISENO.md)). Ya incluye:
+**Fase 4 · Flipping, Mercado Negro y datos públicos (v0.4).** Sobre refinado y estrategias (v0.3), la calculadora (v0.2) y los datos y frescura (v0.1). Diseño aprobado ([`docs/DISENO.md`](docs/DISENO.md)). Ya incluye:
 
 - Worker v2 con historial propio y rutas `/v2` ([`worker/worker.js`](worker/worker.js), guía en [`docs/WORKER.md`](docs/WORKER.md)).
 - App web (PWA) que se conecta a tu base, muestra la frescura de tus datos por ciudad, lo último que capturaste y el historial de cada objeto.
@@ -19,13 +19,16 @@ Motor de decisiones económicas para Albion Online. Aplicación aparte de [Silve
 - **Refinar o comprar el refinado:** en la calculadora, al elegir un material refinado se compara «comprar recurso → refinar → vender» contra «comprar el refinado ya hecho → vender», en INSTANT y en ORDEN.
 - **Estrategias · «Tengo estos materiales»:** eliges un material y cuántos tienes; compara vender los materiales, refinar, fabricar y vender en la ciudad, o fabricar → Mercado Negro. Marca la mejor opción y muestra cuántas recetas se revisaron y cuántas se descartaron por falta de precio o por datos de más de 24 h. Nunca recomienda gastar más silver del que tienes.
 
-Todavía no busca oportunidades por su cuenta ni hace «¿Qué hago hoy?»: eso viene en las fases siguientes.
+- **Flipping** (pestaña «Flipping»): busca objetos que se compran en una ciudad y se venden más caros en otra o en el Mercado Negro, después de impuestos, recorriendo las órdenes visibles. Cada oportunidad muestra frescura, liquidez, riesgo y de dónde vino cada precio.
+- **Datos tuyos + Albion Data Project:** la app usa tu base y los datos públicos; para cada precio (venta y compra por separado) toma el más reciente y lo marca «propio» o «público». Los datos públicos no traen cantidades: esas oportunidades quedan «cantidad no verificada». Se activan o desactivan en «Mis datos».
+
+Todavía no hace «¿Qué hago hoy?»: eso viene en las fases siguientes.
 
 ## Usarla
 
 1. Actualiza tu Worker con [`docs/WORKER.md`](docs/WORKER.md).
 2. Abre la app, escribe la dirección de tu Worker y tu clave, y pulsa **Conectar**. Se guardan solo en ese dispositivo.
-3. Pruebas: `npm install && npm test` (48 pruebas: Worker, lógica de la app, motor de profit y estrategias).
+3. Pruebas: `npm install && npm test` (70 pruebas: Worker, lógica de la app, motor de profit y estrategias).
 
 Los datos del juego (`data/game/*.json`) se generan con `python3 scripts/build-data.py <carpeta data de Silver Master>`.
 

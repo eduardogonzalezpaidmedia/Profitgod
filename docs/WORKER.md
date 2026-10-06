@@ -27,3 +27,13 @@ Es el mismo Worker que ya tienes, con historial y rutas nuevas. **No borra nada 
 - Una fila por objeto, ciudad y calidad como máximo cada 10 minutos.
 - Se conservan 45 días; una vez al día se borra lo más antiguo.
 - Si hay menos de 3 registros, la app muestra «Datos insuficientes» en lugar de estadísticas.
+
+
+## Versión 3 (Fase 4)
+
+Para que **Flipping** lea tu base necesitas volver a pegar `worker/worker.js` (versión 3). Agrega dos rutas:
+
+- `/v2/market?cities=&maxage=&limit=` — todos los precios recientes de esas ciudades.
+- `/v2/book?ids=&cities=` — las órdenes (precio y cantidad) vistas por última vez.
+
+Las rutas anteriores y las de Silver Master siguen igual. No hace falta cambiar la clave ni la base.

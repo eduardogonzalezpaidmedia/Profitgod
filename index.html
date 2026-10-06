@@ -8,14 +8,14 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<link rel="stylesheet" href="dashboard/styles.css?v=0.3">
+<link rel="stylesheet" href="dashboard/styles.css?v=0.4">
 </head>
 <body>
 <header class="top">
   <div class="brand"><span class="logo">◆</span> Profit God</div>
-  <span class="ver" id="ver">v0.3</span>
+  <span class="ver" id="ver">v0.4</span>
 </header>
-<nav class="tabs"><a href="#datos" class="on">Mis datos</a><a href="#calc">Calculadora</a><a href="#estrategias">Estrategias</a></nav>
+<nav class="tabs"><a href="#datos" class="on">Mis datos</a><a href="#calc">Calculadora</a><a href="#estrategias">Estrategias</a><a href="#flipping">Flipping</a></nav>
 <main id="viewData">
   <section class="card" id="cConn">
     <h2>Tu base de datos</h2>
@@ -29,6 +29,17 @@
     <h2>Qué tan frescos están tus datos</h2>
     <div id="fresh"></div>
     <p class="hint" id="histNote"></p>
+  </section>
+
+  <section class="card" id="cPub">
+    <h2>Datos públicos (Albion Data Project)</h2>
+    <p class="hint">La app puede usar tus datos y los públicos a la vez. Por cada precio usa el <b>más reciente</b> y te muestra de cuál viene: <b>propio</b> o <b>público</b>. Los datos públicos no traen cantidades.</p>
+    <div class="grid">
+      <label>Usar datos públicos<select id="usePublic"><option value="1">SÍ</option><option value="0">NO (solo los míos)</option></select></label>
+      <label>Servidor<select id="server"></select></label>
+    </div>
+    <label>Proxy (opcional, solo si el navegador no puede leer los datos públicos)<input id="proxy" type="url" inputmode="url" autocomplete="off" placeholder="https://mi-proxy.….workers.dev"></label>
+    <div class="row"><button id="btnPub">Probar datos públicos</button><span id="pubMsg" class="msg"></span></div>
   </section>
 
   <section class="card" id="cCfg">
@@ -54,8 +65,9 @@
 </main>
 <main id="viewCalc" hidden></main>
 <main id="viewStrat" hidden></main>
+<main id="viewFlip" hidden></main>
 
 <dialog id="dlg"><div id="dlgBody"></div><div class="row end"><button id="dlgClose">Cerrar</button></div></dialog>
-<script type="module" src="dashboard/app.js?v=0.3"></script>
+<script type="module" src="dashboard/app.js?v=0.4"></script>
 </body>
 </html>

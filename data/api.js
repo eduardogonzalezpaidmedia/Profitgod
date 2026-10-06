@@ -15,6 +15,8 @@ export function makeApi(cfg) {
     freshness: () => get('/v2/freshness'),
     recent: (city, limit) => get('/v2/recent', { city, limit }),
     prices: (ids, cities, q) => get('/v2/prices', { ids: [].concat(ids).join(','), cities: [].concat(cities || []).join(','), q: [].concat(q || []).join(',') }),
-    history: (id, city, q, days) => get('/v2/history', { id, city, q, days })
+    history: (id, city, q, days) => get('/v2/history', { id, city, q, days }),
+    market: (cities, maxage, limit) => get('/v2/market', { cities: [].concat(cities).join(','), maxage, limit }),
+    book: (ids, cities) => get('/v2/book', { ids: [].concat(ids).join(','), cities: [].concat(cities || []).join(',') })
   };
 }

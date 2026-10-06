@@ -76,3 +76,8 @@ t('el motor de profit existente no cambió (la poción de siempre)', () => {
   const e = evaluate({ game, itemId: 'T2_POTION_HEAL', units: 10, craftCity: 'Lymhurst', saleCity: 'Caerleon', premium: false, focus: false, manualRatePct: 0, market: { T2_AGARIC: { sell_min: 100, buy_max: 90 } }, saleMarket: { sell_min: 420, buy_max: 400 }, fee: { mode: 'total', total: 0 }, overrides: {} });
   eq(e.base.instant.calc.profit, 2080);
 });
+
+t('estrategias: cada opción dice de qué fuente salen sus datos', () => {
+  const r = run({}, mkt({ 'Lymhurst|T4_PLANKS': { sell_min: 50, sellAge: 5, sellSrc: 'público' }, 'Caerleon|T4_2H_CROSSBOW': { buy_max: 8000, buyAge: 10, buySrc: 'propio' }, 'Lymhurst|T4_METALBAR': { buy_max: 600, buyAge: 5, buySrc: 'propio' } }));
+  eq(find(r, 'Fabricar y vender', 'T4_2H_CROSSBOW').source, 'mixto'); eq(r.A.source, 'propio');
+});

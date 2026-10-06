@@ -81,3 +81,22 @@ t('/v2/recent lista lo último capturado, filtrable por ciudad', async () => {
   const all = (await call(env, 'GET', `/v2/recent?key=${KEY}`)).body.rows, bm = (await call(env, 'GET', `/v2/recent?city=Black%20Market&key=${KEY}`)).body.rows;
   eq([all.length, bm.length, bm[0].item_id], [2, 1, 'T4_BAG']);
 });
+
+t('/v2/market entrega los precios de varias ciudades con antigüedad y respeta la edad máxima', async () => {
+  const env = { DB: makeD1(), CLAVE: KEY };
+  await call(env, 'POST', `/in/${KEY}/marketorders.ingest`, { Orders: [order('T4_BAG', '1002', 4000, 3, 'offer'), order('T4_BAG', '3003', 5200, 9, 'request'), order('T5_BAG', '3005', 9000, 1, 'offer')] });
+  env.DB._raw.prepare("UPDATE prices SET sell_t = sell_t - ?, buy_t = buy_t - ? WHERE city = 'Caerleon'").run(3 * 3600000, 3 * 3600000);
+  const m = (await call(env, 'GET', `/v2/market?cities=Lymhurst,Black%20Market,Caerleon&key=${KEY}`)).body;
+  eq(m.rows.length, 3); eq(m.truncated, false);
+  const bm = m.rows.find(x => x.city === 'Black Market'); eq([bm.buy_max, bm.buy_amount, bm.buy_orders], [5200, 9, 1]); ok(bm.buy_age <= 1);
+  eq(m.rows.find(x => x.city === 'Caerleon').sell_age >= 179, true);
+  eq((await call(env, 'GET', `/v2/market?cities=Lymhurst,Caerleon&maxage=60&key=${KEY}`)).body.rows.length, 1, 'lo de hace 3 h queda fuera con maxage=60');
+  eq((await call(env, 'GET', `/v2/market?key=${KEY}`)).status, 400);
+  eq((await call(env, 'GET', `/v2/market?cities=Lymhurst&limit=1&key=${KEY}`)).body.truncated, false);
+});
+t('/v2/book entrega las órdenes ordenadas (venta de menor a mayor, compra de mayor a menor)', async () => {
+  const env = { DB: makeD1(), CLAVE: KEY };
+  await call(env, 'POST', `/in/${KEY}/marketorders.ingest`, { Orders: [order('T4_BAG', '1002', 4300, 2, 'offer'), order('T4_BAG', '1002', 4100, 5, 'offer'), order('T4_BAG', '1002', 3900, 1, 'request'), order('T4_BAG', '1002', 4000, 7, 'request')] });
+  const b = (await call(env, 'GET', `/v2/book?ids=T4_BAG&cities=Lymhurst&key=${KEY}`)).body.rows[0];
+  eq(b.sell, [[4100, 5], [4300, 2]]); eq(b.buy, [[4000, 7], [3900, 1]]); ok(b.sell_age <= 1);
+});

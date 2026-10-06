@@ -41,3 +41,6 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:6px 4px;t
 .mat input{padding:6px 8px;text-align:right;width:100%;min-width:90px}.mat td.src{font-size:11px;color:var(--mute);text-align:right}.mat td.src.sim{color:var(--acc)}
 details{margin:8px 0}summary{cursor:pointer;color:var(--mute);font-size:13px}
 .tablewrap{overflow-x:auto}
+.mat td.src.pub{color:#6cb6ff}.tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;border:1px solid var(--line);color:var(--mute);margin-left:4px}.tag.own{color:var(--acc);border-color:var(--acc)}.tag.pub{color:#6cb6ff;border-color:#6cb6ff}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.chips button{padding:6px 10px;font-size:13px}.chips button.on{background:var(--acc);color:#1a1405;border-color:var(--acc);font-weight:600}
+.fl{padding:10px 0;border-top:1px solid var(--line);cursor:pointer}.fl:first-child{border-top:0}.fl .t{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.fl .t b{overflow:hidden;text-overflow:ellipsis}.fl .m{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center}.fl .p{font-variant-numeric:tabular-nums;font-weight:700}

@@ -1,5 +1,5 @@
 /**
- * Profit God / Silver Master — BASE DE DATOS PRIVADA de precios (Cloudflare Worker + D1), versión 2.
+ * Profit God / Silver Master — BASE DE DATOS PRIVADA de precios (Cloudflare Worker + D1), versión 3.
  *
  * Es el mismo Worker de siempre MÁS historial y rutas /v2. No cambia ni borra nada de lo existente:
  * las rutas /prices, /orders, /sales y /stats siguen funcionando igual para Silver Master.
@@ -9,6 +9,8 @@
  *   · GET /v2/history?id=&city=&q=&days=&key=  → serie histórica propia + promedio, mediana, mín., máx. y volatilidad
  *   · GET /v2/freshness?key=                   → por ciudad: cuántos datos y qué tan recientes
  *   · GET /v2/recent?city=&limit=&key=         → lo último que capturaste (para ver qué hay en la base)
+ *   · GET /v2/market?cities=&maxage=&limit=    → todos los precios de esas ciudades (para buscar oportunidades entre ciudades)
+ *   · GET /v2/book?ids=&cities=&key=           → las órdenes (precio y cantidad) vistas la última vez de esos objetos
  *
  * (Descripción original abajo.)
  * Silver Master — BASE DE DATOS PRIVADA de precios (Cloudflare Worker + D1).
@@ -186,6 +188,30 @@ export default {
           const r = await env.DB.prepare(`SELECT * FROM prices ${city ? 'WHERE city = ?' : ''} ORDER BY MAX(COALESCE(sell_t,0), COALESCE(buy_t,0)) DESC LIMIT ${limit}`).bind(...(city ? [city] : [])).all();
           return json({ now: iso(now), rows: (r.results || []).map(row => toV2(row, now)) });
         }
+        if (parts[1] === 'market') {
+          const cities = (url.searchParams.get('cities') || '').split(',').filter(Boolean).slice(0, 12);
+          if (!cities.length) return json({ error: 'Faltan las ciudades.' }, 400);
+          const maxage = Math.min(Math.max(Number(url.searchParams.get('maxage')) || 1440, 1), 60 * 24 * 30), limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 5000, 1), 8000);
+          const cut = now - maxage * 60000;
+          const r = await env.DB.prepare(`SELECT item_id, city, quality, sell_min, sell_amount, sell_orders, sell_t, buy_max, buy_amount, buy_orders, buy_t FROM prices
+            WHERE city IN (${cities.map(() => '?').join(',')}) AND (COALESCE(sell_t,0) > ? OR COALESCE(buy_t,0) > ?)
+            ORDER BY MAX(COALESCE(sell_t,0), COALESCE(buy_t,0)) DESC LIMIT ${limit + 1}`).bind(...cities, cut, cut).all();
+          const rows = r.results || [], truncated = rows.length > limit, age = t => t ? Math.round((now - t) / 60000) : null;
+          return json({ now: iso(now), truncated, rows: rows.slice(0, limit).map(x => ({ item_id: x.item_id, city: x.city, quality: x.quality,
+            sell_min: x.sell_min || 0, sell_amount: x.sell_amount || 0, sell_orders: x.sell_orders || 0, sell_age: age(x.sell_t),
+            buy_max: x.buy_max || 0, buy_amount: x.buy_amount || 0, buy_orders: x.buy_orders || 0, buy_age: age(x.buy_t) })) });
+        }
+        if (parts[1] === 'book') {
+          const ids = (url.searchParams.get('ids') || '').split(',').filter(Boolean).slice(0, 100), cities = (url.searchParams.get('cities') || '').split(',').filter(Boolean);
+          const out = [];
+          for (let i = 0; i < ids.length; i += 80) {
+            const chunk = ids.slice(i, i + 80);
+            const r = await env.DB.prepare(`SELECT item_id, city, quality, sell_list, sell_t, buy_list, buy_t FROM prices WHERE item_id IN (${chunk.map(() => '?').join(',')})`).bind(...chunk).all();
+            for (const x of r.results || []) { if (cities.length && !cities.includes(x.city)) continue;
+              out.push({ item_id: x.item_id, city: x.city, quality: x.quality, sell: JSON.parse(x.sell_list || '[]'), sell_age: x.sell_t ? Math.round((now - x.sell_t) / 60000) : null, buy: JSON.parse(x.buy_list || '[]'), buy_age: x.buy_t ? Math.round((now - x.buy_t) / 60000) : null }); }
+          }
+          return json({ now: iso(now), rows: out });
+        }
         if (parts[1] === 'history') {
           const id = url.searchParams.get('id') || '', city = url.searchParams.get('city') || '', q = Number(url.searchParams.get('q')) || 1;
           const days = Math.min(Math.max(Number(url.searchParams.get('days')) || 7, 1), KEEP_DAYS);
@@ -204,7 +230,7 @@ export default {
           return json({ now: iso(now), history_rows: lg.n || 0, history_since: lg.first ? iso(lg.first) : null,
             cities: (r.results || []).map(c => ({ city: c.city, rows: c.n, last: c.last ? iso(c.last) : null, age_min: c.last ? Math.round((now - c.last) / 60000) : null, freshness: freshness(c.last ? now - c.last : null) })) });
         }
-        return json({ error: 'Ruta v2 desconocida.', routes: ['/v2/prices', '/v2/history', '/v2/freshness', '/v2/recent'] }, 404);
+        return json({ error: 'Ruta v2 desconocida.', routes: ['/v2/prices', '/v2/history', '/v2/freshness', '/v2/recent', '/v2/market', '/v2/book'] }, 404);
       }
       if (parts[0] === 'prices') {
         const ids = decodeURIComponent(parts.slice(1).join('/')).replace(/\.json$/, '').split(',').filter(Boolean).slice(0, 400);

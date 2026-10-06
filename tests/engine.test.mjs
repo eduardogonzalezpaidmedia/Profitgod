@@ -94,3 +94,11 @@ t('ROI y silver/hora', () => { eq(calculateROI(500, 1000), 50); eq(calculateSilv
 t('objeto sin receta: avisa', () => { eq(evaluate(base({ itemId: 'NO_EXISTE' })).ok, false); });
 
 t('con retorno manual no hay comparación de Focus (no cambiaría nada)', () => { eq(evaluate(base()).comparisons.focus, undefined); });
+
+t('origen de cada precio: se muestra propio / público / simulado / sin dato y el resumen', () => {
+  const mk = { T2_AGARIC: { sell_min: 100, buy_max: 90, sellAge: 3, buyAge: 3, sellSrc: 'público', buySrc: 'propio' } };
+  const e = evaluate(base({ market: mk, saleMarket: { sell_min: 420, buy_max: 400, sellAge: 4, buyAge: 4, sellSrc: 'propio', buySrc: 'propio' } }));
+  eq([e.base.instant.priceSource.T2_AGARIC, e.base.instant.saleSource, e.base.instant.source], ['público', 'propio', 'mixto']);
+  eq([e.base.order.priceSource.T2_AGARIC, e.base.order.saleSource, e.base.order.source], ['propio', 'propio', 'propio']);
+  eq(evaluate(base({ market: mk, overrides: { instant: { T2_AGARIC: 50 } } })).base.instant.priceSource.T2_AGARIC, 'simulado');
+});

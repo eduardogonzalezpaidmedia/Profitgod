@@ -2,6 +2,7 @@
 // Función pura: recibe los precios ya leídos y devuelve el desglose completo. No usa red ni DOM.
 import { craftBatch } from './profit.js';
 import { compute as computeRR } from '../refining/returnRate.js';
+import { sourceSummary } from '../data/merge.js';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 const pos = v => isNum(v) && v > 0 ? v : null;
@@ -44,7 +45,8 @@ function oneScenario(i, mode, ctx) {
     let auto = null;
     if (mk) auto = mode === 'instant' ? pos(mk.sell_min) : (pos(mk.buy_max) ? Math.round(mk.buy_max * (1 + setupPct / 100)) : null);
     const o = pos(ov[m.item_id]);
-    prices[m.item_id] = o !== null ? o : auto; source[m.item_id] = o !== null ? 'simulado' : (auto !== null ? 'base' : 'sin dato');
+    prices[m.item_id] = o !== null ? o : auto;
+    source[m.item_id] = o !== null ? 'simulado' : (auto !== null ? ((mk && (mode === 'instant' ? mk.sellSrc : mk.buySrc)) || 'base') : 'sin dato');
   }
   const sm = i.saleMarket || {};
   let saleAuto = mode === 'instant' ? pos(sm.buy_max) : pos(sm.sell_min), saleNA = false;
@@ -67,7 +69,8 @@ function oneScenario(i, mode, ctx) {
   for (const m of recipe.materials) { const mk = i.market && i.market[m.item_id]; if (mk) ages.push(mode === 'instant' ? mk.sellAge : mk.buyAge); }
   ages.push(mode === 'instant' ? sm.buyAge : sm.sellAge);
   const known = ages.filter(isNum);
-  return { mode, calc, priceSource: source, saleSource: saleOv !== null ? 'simulado' : (saleAuto !== null ? 'base' : 'sin dato'), saleNA,
+  return { mode, calc, priceSource: source, saleSource: saleOv !== null ? 'simulado' : (saleAuto !== null ? ((mode === 'instant' ? sm.buySrc : sm.sellSrc) || 'base') : 'sin dato'), saleNA,
+    source: sourceSummary([...Object.values(source), saleOv === null && saleAuto !== null ? ((mode === 'instant' ? sm.buySrc : sm.sellSrc) || null) : null].filter(x => x === 'propio' || x === 'público')),
     feeRange: { min: fees[0], max: fees[1], used: feeUse }, oldestMinutes: known.length ? Math.max(...known) : null, missingAge: known.length < ages.length };
 }
 

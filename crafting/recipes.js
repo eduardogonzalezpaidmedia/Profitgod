@@ -70,7 +70,12 @@ export function makeGameData(raw) {
 }
 
 /** En el navegador: lee los JSON con fetch. */
-export async function loadGameData(base = 'data/game/') {
+let _loading = null;
+export function loadGameData(base = 'data/game/') {
+  if (!_loading) _loading = _load(base).catch(e => { _loading = null; throw e; });
+  return _loading;
+}
+async function _load(base) {
   const names = ['items', 'recipes', 'materials', 'cities', 'stations', 'settings'];
   const parts = await Promise.all(names.map(n => fetch(base + n + '.json').then(r => { if (!r.ok) throw new Error('No se pudo leer ' + n); return r.json(); })));
   const raw = {}; names.forEach((n, i) => raw[n] = parts[i]);
