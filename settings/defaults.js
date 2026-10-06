@@ -14,7 +14,14 @@ export const DEFAULTS = {
   server: 'americas',
   proxy: '',
   unknownDepthUnits: 10, // unidades a considerar cuando un precio viene de datos públicos y no se sabe cuántas hay
-  maxUnits: 0
+  maxUnits: 0,
+  // Tiempos ESTIMADOS (el juego no los publica): ajústalos con tu experiencia. Sin ellos el silver/hora es solo una guía.
+  tripMin: 15,          // minutos por viaje entre ciudades
+  actionMin: 5,         // minutos por tanda de comprar/vender
+  craftMin: 0.5,        // minutos por fabricación/refinado
+  craftFee: 0,          // tarifa de estación por fabricación (la llenas tú; 0 si no la conoces)
+  anomalyPct: 20,       // avisar si el precio se aleja de su mediana más de este %
+  reservePct: 10        // % del silver que «¿Qué hago hoy?» nunca gasta
 };
 export const HOURS = [0.25, 0.5, 1, 1.5, 2, 4, 8];
 export const RISKS = ['bajo', 'medio', 'alto'];

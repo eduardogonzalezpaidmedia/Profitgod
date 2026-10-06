@@ -1,18 +1,18 @@
 // Flipping: comprar en una ciudad, llevar, vender en otra (en especial el Mercado Negro). Usa tus datos y los públicos, marcando el origen.
 import { $, el, chip, field, select, input, num } from './dom.js';
 import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js';
-import { scan, walk, orderEstimate, liquidityLevel } from '../flipping/flipping.js';
-import { flipRisk, historyView } from '../black-market/risk.js';
+import { findFlips } from '../flipping/finder.js';
 import { freshness, ageText } from '../data/freshness.js';
 import { fmt } from '../data/items.js';
+import { kv, scoreBlock } from './explain.js';
 
-const LIM = { margen: 'se acabó el margen: la siguiente unidad ya no deja ganancia', silver: 'tu silver disponible', unidades: 'tu máximo de unidades', oferta: 'las unidades que hay a la venta en la ciudad de compra', demanda: 'las unidades que piden en la ciudad de venta' };
+const LIM = { margen: 'se acabó el margen: la siguiente unidad ya no deja ganancia', silver: 'tu silver disponible', unidades: 'tu máximo de unidades o el tope prudente de 2/3 de lo que piden (para no hundir el precio)', oferta: 'las unidades que hay a la venta en la ciudad de compra', demanda: 'las unidades que piden en la ciudad de venta' };
 const pc = (n, d = 1) => n.toFixed(d).replace('.', ',') + '%';
 const flat = r => ({ item_id: r.item_id, city: r.city, quality: r.quality, sell_min: r.sell.price, sell_age: r.sell.age, sell_amount: r.sell.amount, sell_src: r.sell.src, buy_max: r.buy.price, buy_age: r.buy.age, buy_amount: r.buy.amount, buy_src: r.buy.src });
 const srcTag = s => { const t = el('span', 'tag ' + (s === 'propio' ? 'own' : s === 'público' ? 'pub' : ''), s || 'sin dato'); return t; };
 
 export function mountFlip(root, ctx) {
-  let game = null, built = false, results = [], lastInfo = null;
+  let game = null, built = false, results = [], all = [], lastInfo = null;
   const S = { buy: new Set(), sell: new Set(), onlyBM: false, minProfit: '', minRoi: '', cat: '', tmin: 4, tmax: 6 }, ui = {};
 
   async function show() {
@@ -40,6 +40,17 @@ export function mountFlip(root, ctx) {
     ui.minP = input('', null, { inputMode: 'numeric', placeholder: '0' }); ui.minR = input('', null, { inputMode: 'numeric', placeholder: '0' });
     g.append(field('Silver disponible', ui.silver), field('Máx. unidades por operación', ui.maxU), field('Profit mínimo', ui.minP), field('ROI mínimo %', ui.minR));
     c1.appendChild(g);
+    const fd = el('details'); fd.open = true; fd.appendChild(el('summary', '', 'Filtros y orden (se aplican al instante, sin volver a leer precios)'));
+    const g3 = el('div', 'grid'), re = () => { if (all.length || results.length) applyFilters(); };
+    ui.minS = input('', re, { inputMode: 'numeric', placeholder: '0' });
+    ui.maxRisk = select([['ALTO', 'Cualquiera'], ['MEDIO', 'Hasta medio'], ['BAJO', 'Solo bajo']], ({ bajo: 'BAJO', medio: 'MEDIO', alto: 'ALTO' })[ctx.getCfg().risk] || 'BAJO', re);
+    ui.minLiq = select([['', 'Cualquiera'], ['BAJA', 'Baja o más'], ['MEDIA', 'Media o más'], ['ALTA', 'Alta o más']], '', re);
+    ui.maxAge = select([[1440, 'Hasta 24 h'], [720, 'Hasta 12 h'], [120, 'Hasta 2 h'], [30, 'Hasta 30 min']], 1440, re);
+    ui.sort = select([['score', 'Puntaje'], ['profit', 'Profit total'], ['roi', 'ROI'], ['sph', 'Silver por hora']], 'score', re);
+    ui.noAn = select([['0', 'Mostrar con avisos'], ['1', 'Ocultar con avisos']], '0', re);
+    [ui.minP, ui.minR].forEach(x => x.addEventListener('input', re));
+    g3.append(field('Ordenar por', ui.sort), field('Puntaje mínimo', ui.minS), field('Riesgo máximo', ui.maxRisk), field('Liquidez mínima', ui.minLiq), field('Antigüedad máxima del dato', ui.maxAge), field('Avisos de anomalía', ui.noAn));
+    fd.appendChild(g3); c1.appendChild(fd);
     const d = el('details'); d.appendChild(el('summary', '', 'Ampliar con datos públicos (objetos que aún no tengo en mi base)'));
     const g2 = el('div', 'grid'); ui.cat = select([['', 'Ninguno']].concat(Object.entries(CATEGORY_LABEL).filter(([k]) => ['weapons', 'armor', 'head', 'shoes', 'offhands', 'capes', 'bags'].includes(k))), '');
     ui.tmin = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), S.tmin); ui.tmax = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), S.tmax);
@@ -56,57 +67,40 @@ export function mountFlip(root, ctx) {
     if (!src.usable()) return msg('Conecta tu base o activa los datos públicos en «Mis datos».', true);
     const sell = [...S.sell].filter(c => !S.onlyBM || c === 'Black Market'), buy = [...S.buy];
     if (!buy.length || !sell.length) return msg('Elige al menos una ciudad para comprar y una para vender.', true);
-    ui.go.disabled = true; msg('Leyendo precios…');
+    ui.go.disabled = true; msg('Leyendo precios y calculando…');
     try {
-      const silver = num(ui.silver.value), maxUnits = num(ui.maxU.value), minP = num(ui.minP.value), minR = num(ui.minR.value), unk = cfg.unknownDepthUnits || 10;
-      const taxPct = cfg.premium ? game.settings.taxes.sales_tax_premium_pct : game.settings.taxes.sales_tax_no_premium_pct, setupPct = game.settings.taxes.setup_fee_pct;
       let extra = []; const cat = ui.cat.value, t1 = +ui.tmin.value, t2 = +ui.tmax.value;
       if (cat) extra = game.items.filter(i => i.category === cat && i.tier >= t1 && i.tier <= t2 && i.enchantment === 0 && game.recipes.has(i.item_id)).map(i => i.item_id).slice(0, 600);
-      const cities = [...new Set([...buy, ...sell])];
-      const mk = await src.market(cities, { maxage: 1440, limit: 8000, extraIds: extra });
-      const info = { ownCount: mk.ownCount, pubCount: mk.pubCount, items: mk.itemCount, truncated: mk.truncated, errs: [mk.ownError && 'Tu base: ' + mk.ownError, mk.pubError && 'Datos públicos: ' + mk.pubError].filter(Boolean) };
-      const rows = mk.rows.map(flat), idx = new Map(mk.rows.map(r => [r.city + '|' + r.item_id + '|' + r.quality, r]));
-      msg('Calculando…');
-      const cand = scan(rows, { buyCities: buy, sellCities: sell, taxPct, maxAgeMin: 1440, unknownUnits: unk, top: 40 });
-      // órdenes (precio y cantidad) de tu base para los candidatos
-      const books = new Map(); const ids = [...new Set(cand.map(c => c.item_id))];
-      if (src.own.on() && ids.length) for (let i = 0; i < ids.length; i += 100) { try { (await src.own.book(ids.slice(i, i + 100), cities)).rows.forEach(b => books.set(b.city + '|' + b.item_id + '|' + b.quality, b)); } catch (e) { info.errs.push('Tu base (órdenes): ' + e.message); } }
-      let out = cand.map(c => {
-        const ra = idx.get(c.from + '|' + c.item_id + '|' + c.quality), rb = idx.get(c.to + '|' + c.item_id + '|' + c.quality);
-        const ba = books.get(c.from + '|' + c.item_id + '|' + c.quality), bb = books.get(c.to + '|' + c.item_id + '|' + c.quality);
-        const sellBook = c.buySrc === 'propio' && ba && ba.sell.length ? ba.sell : [[c.buyUnit, unk]], buyBook = c.sellSrc === 'propio' && bb && bb.buy.length ? bb.buy : [[c.sellUnit, unk]];
-        const depthKnown = c.buySrc === 'propio' && ba && ba.sell.length > 0 && c.sellSrc === 'propio' && bb && bb.buy.length > 0;
-        const w = walk({ sellBook, buyBook, taxPct, silver, maxUnits });
-        const oe = orderEstimate({ buyCityBuyMax: ra && ra.buy.price, sellCitySellMin: rb && rb.sell.price, units: w.units, taxPct, setupPct, toBlackMarket: c.to === 'Black Market' });
-        return Object.assign({}, c, { ra, rb, w, depthKnown, oe, oldest: Math.max(c.buyAge, c.sellAge), liquidity: c.sellSrc === 'propio' && bb && bb.buy.length ? liquidityLevel(c.demand) : 'SIN DATO' });
-      }).filter(o => o.w.units > 0 && o.w.profit > 0);
-      out.sort((a, b) => b.w.profit - a.w.profit); out = out.slice(0, 20);
-      // historial propio del destino (volatilidad) para el riesgo
-      await Promise.all(out.map(async o => { o.hist = null; if (!src.own.on()) return; try { o.hist = await src.own.history(o.item_id, o.to, o.quality, 14); } catch (e) { /* sin historial */ } }));
-      out.forEach(o => { o.hv = historyView(o.hist, o.sellUnit, 'buy');
-        o.risk = flipRisk({ cost: o.w.cost, from: o.from, to: o.to, units: o.w.units, demand: o.depthKnown ? o.demand : null, depthKnown: o.depthKnown, roi: o.w.roi, oldestMin: o.oldest, volatilityPct: o.hv.enough ? o.hv.volatilityPct : null, historyPoints: o.hv.points }); });
-      results = out.filter(o => o.w.profit >= minP && (o.w.roi === null || o.w.roi >= minR)); lastInfo = info;
-      msg(info.errs.join(' · '), info.errs.length > 0); draw();
+      const r = await findFlips({ src, game, cfg, buy, sell, silver: num(ui.silver.value), maxUnits: num(ui.maxU.value), extra });
+      all = r.out; lastInfo = r.info; msg(r.info.errs.join(' · '), r.info.errs.length > 0); applyFilters();
     } catch (e) { msg(e.message.includes('Failed to fetch') ? 'No se pudo conectar.' : e.message, true); }
     ui.go.disabled = false;
+  }
+  const RISK_ORDER = { BAJO: 0, MEDIO: 1, ALTO: 2 }, LIQ_ORDER = ['MUY BAJA', 'BAJA', 'MEDIA', 'ALTA', 'MUY ALTA'];
+  function applyFilters() {
+    const minP = num(ui.minP.value), minR = num(ui.minR.value), minS = num(ui.minS.value), maxRisk = ui.maxRisk.value, minLiq = ui.minLiq.value, maxAge = +ui.maxAge.value, sort = ui.sort.value, noAn = ui.noAn.value === '1';
+    results = all.filter(o => o.w.profit >= minP && (o.w.roi === null || o.w.roi >= minR) && (o.opp.score === null ? false : o.opp.score >= minS) && RISK_ORDER[o.risk.level] <= RISK_ORDER[maxRisk]
+      && (minLiq === '' || LIQ_ORDER.indexOf(o.liquidity) >= LIQ_ORDER.indexOf(minLiq)) && o.oldest <= maxAge && (!noAn || !o.anomalies.length));
+    const key = { score: o => o.opp.score || 0, profit: o => o.w.profit, roi: o => o.w.roi || 0, sph: o => o.sph || 0 }[sort];
+    results.sort((a, b) => key(b) - key(a)); draw();
   }
 
   function draw() {
     ui.out.hidden = false; ui.out.replaceChildren(el('h2', '', results.length ? 'Mejores oportunidades' : 'Sin oportunidades'));
-    ui.out.appendChild(el('p', 'hint', 'Venta INSTANT a las órdenes de compra visibles, después de impuesto. Ordenado por profit total. Toca una para ver de dónde sale cada número.'));
-    if (!results.length) ui.out.appendChild(el('div', 'warn', 'No hay ganancias con datos de menos de 24 horas en lo que revisé. Pasa por más mercados del juego (o amplía con datos públicos) y vuelve a buscar.'));
+    ui.out.appendChild(el('p', 'hint', 'Venta INSTANT a las órdenes de compra visibles, después de impuesto. Toca una para ver el puntaje, de dónde sale cada número y los avisos. El silver/hora usa tiempos estimados (' + (ctx.getCfg().tripMin || 15) + ' min de viaje + ' + (ctx.getCfg().actionMin || 5) + ' min de compra/venta; los cambias en «Mis datos»).'));
+    if (!results.length) ui.out.appendChild(el('div', 'warn', all.length ? 'Ninguna pasa los filtros que pusiste (' + all.length + ' oportunidades sin filtrar). Afloja los filtros.' : 'No hay ganancias con datos de menos de 24 horas en lo que revisé. Pasa por más mercados del juego (o amplía con datos públicos) y vuelve a buscar.'));
     results.forEach(o => {
       const r = el('div', 'fl'), t = el('div', 't'); t.appendChild(el('b', '', game.label(o.item_id) + (o.quality > 1 ? ' · ' + QUALITIES[o.quality - 1].label : ''))); t.appendChild(el('span', 'p', '🟢 ' + fmt(o.w.profit)));
-      r.appendChild(t); r.appendChild(el('div', 'hint', o.from + ' → ' + o.to + ' · ' + fmt(o.w.units) + ' unid. · capital ' + fmt(o.w.cost) + ' · ROI ' + pc(o.w.roi)));
-      const m = el('div', 'm'); m.appendChild(chip(freshness(o.oldest * 60000))); m.appendChild(el('span', 'tag', 'liquidez ' + o.liquidity)); m.appendChild(el('span', 'tag', 'riesgo ' + o.risk.level));
+      r.appendChild(t); r.appendChild(el('div', 'hint', o.from + ' → ' + o.to + ' · ' + fmt(o.w.units) + ' unid. · capital ' + fmt(o.w.cost) + ' · ROI ' + pc(o.w.roi) + ' · ~' + fmt(Math.round(o.sph || 0)) + ' silver/h (estimado)'));
+      const m = el('div', 'm'); m.appendChild(el('span', 'tag score', 'puntaje ' + o.opp.score)); m.appendChild(chip(freshness(o.oldest * 60000))); m.appendChild(el('span', 'tag', 'liquidez ' + o.liquidity)); m.appendChild(el('span', 'tag', 'riesgo ' + o.risk.level));
+      if (o.anomalies.length) m.appendChild(el('span', 'tag warnt', '⚠ ' + o.anomalies.length + (o.anomalies.length === 1 ? ' aviso' : ' avisos')));
       m.appendChild(el('span', 'hint', 'compra')); m.appendChild(srcTag(o.buySrc)); m.appendChild(el('span', 'hint', 'venta')); m.appendChild(srcTag(o.sellSrc)); if (!o.depthKnown) m.appendChild(el('span', 'tag', 'cantidad no verificada'));
       r.appendChild(m); r.addEventListener('click', () => detail(o)); ui.out.appendChild(r);
     });
     if (lastInfo) ui.out.appendChild(el('p', 'hint', 'Datos usados: ' + fmt(lastInfo.ownCount) + ' precios tuyos y ' + fmt(lastInfo.pubCount) + ' públicos' + (lastInfo.truncated ? ' (tu base tiene más de los que caben en una consulta; se usaron los más recientes)' : '') + '.'));
-    ui.out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!ui.out.dataset.seen) { ui.out.dataset.seen = '1'; ui.out.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   }
 
-  function kv(t, label, val, cls) { const tr = el('tr'); tr.appendChild(el('td', '', label)); tr.appendChild(el('td', cls || '', val)); t.appendChild(tr); }
   function srcLine(label, side, city) {
     const p = el('p', 'hint'); p.appendChild(document.createTextNode(label + ' en ' + city + ': ')); p.appendChild(srcTag(side.src)); p.appendChild(document.createTextNode(' ' + fmt(side.price) + ' · hace ' + ageText(side.age)));
     const both = []; if (side.ownPrice != null) both.push('propio ' + fmt(side.ownPrice) + ' (hace ' + ageText(side.ownAge) + ')'); if (side.pubPrice != null) both.push('público ' + fmt(side.pubPrice) + ' (hace ' + ageText(side.pubAge) + ')');
@@ -115,6 +109,7 @@ export function mountFlip(root, ctx) {
   function detail(o) {
     const b = $('dlgBody'); b.replaceChildren(el('h2', '', game.label(o.item_id)), el('p', 'hint', o.from + ' → ' + o.to + ' · calidad ' + o.quality + ' · ' + o.item_id));
     const big = el('div', 'res'); big.appendChild(el('div', 'big pos', '🟢 ' + fmt(o.w.profit) + ' silver')); big.appendChild(el('span', 'hint', 'ROI ' + pc(o.w.roi) + ' sobre ' + fmt(o.w.cost) + ' de capital')); b.appendChild(big);
+    scoreBlock(b, o);
     const t = el('table', 'bd'); kv(t, 'Unidades', fmt(o.w.units)); kv(t, 'Compra promedio en ' + o.from, fmt(o.w.avgBuy)); kv(t, 'Costo total', fmt(-o.w.cost), 'neg');
     kv(t, 'Venta promedio en ' + o.to, fmt(o.w.avgSell)); kv(t, 'Venta bruta', fmt(o.w.gross)); kv(t, '− Impuesto de venta', fmt(-o.w.tax), 'neg'); kv(t, 'Venta neta', fmt(o.w.net)); kv(t, 'Profit neto', fmt(o.w.profit)); b.appendChild(t);
     b.appendChild(el('p', 'hint', 'Cantidad limitada por: ' + (LIM[o.w.limitedBy] || o.w.limitedBy) + '.' + (o.depthKnown ? '' : ' No se conocen las órdenes (el precio es público): se supusieron ' + fmt(ctx.getCfg().unknownDepthUnits || 10) + ' unidades. Verifica en el juego cuántas hay.')));

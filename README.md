@@ -6,7 +6,7 @@ Motor de decisiones económicas para Albion Online. Aplicación aparte de [Silve
 
 ## Estado
 
-**Fase 4 · Flipping, Mercado Negro y datos públicos (v0.4).** Sobre refinado y estrategias (v0.3), la calculadora (v0.2) y los datos y frescura (v0.1). Diseño aprobado ([`docs/DISENO.md`](docs/DISENO.md)). Ya incluye:
+**Fase 6 · ¿Qué hago hoy? (v0.6).** Sobre Flipping, Mercado Negro y datos públicos (v0.4), refinado y estrategias (v0.3), la calculadora (v0.2) y los datos y frescura (v0.1). Diseño aprobado ([`docs/DISENO.md`](docs/DISENO.md)). Ya incluye:
 
 - Worker v2 con historial propio y rutas `/v2` ([`worker/worker.js`](worker/worker.js), guía en [`docs/WORKER.md`](docs/WORKER.md)).
 - App web (PWA) que se conecta a tu base, muestra la frescura de tus datos por ciudad, lo último que capturaste y el historial de cada objeto.
@@ -22,13 +22,20 @@ Motor de decisiones económicas para Albion Online. Aplicación aparte de [Silve
 - **Flipping** (pestaña «Flipping»): busca objetos que se compran en una ciudad y se venden más caros en otra o en el Mercado Negro, después de impuestos, recorriendo las órdenes visibles. Cada oportunidad muestra frescura, liquidez, riesgo y de dónde vino cada precio.
 - **Datos tuyos + Albion Data Project:** la app usa tu base y los datos públicos; para cada precio (venta y compra por separado) toma el más reciente y lo marca «propio» o «público». Los datos públicos no traen cantidades: esas oportunidades quedan «cantidad no verificada». Se activan o desactivan en «Mis datos».
 
-Todavía no hace «¿Qué hago hoy?»: eso viene en las fases siguientes.
+- **Opportunity Score 0–100** (Fase 5): cada oportunidad tiene un puntaje con sus 8 componentes visibles (silver/hora, profit, ROI, liquidez, demanda, historial, estabilidad, facilidad) × frescura × riesgo. Lo que no se sabe vale 0 y se marca «sin dato». Pesos en [`opportunity-engine/config.js`](opportunity-engine/config.js).
+- **Avisos de anomalía:** precio de venta lejos de su mediana histórica (±20 %), tus datos y los públicos que no coinciden, o ganancias sospechosamente altas. Solo avisan, no bloquean.
+- **Filtros y orden** en Flipping: puntaje, riesgo, liquidez, antigüedad del dato, avisos; ordenar por puntaje, profit, ROI o silver/hora. Se aplican al instante.
+- **¿Qué hago hoy?** (pestaña «Hoy»): con tu silver, tu tiempo y el riesgo que aceptas arma un plan que mezcla comprar y llevar (desde tu ciudad) con fabricar/refinar donde estás. Nunca pasa de tu silver menos la reserva ni de tu tiempo, no vende más de 2/3 de lo que piden, y cada paso se explica.
+- **Tengo estos materiales, varios a la vez:** agrega varios materiales con su cantidad; fabricar usa todos los que sirven, y lo que sobra se valora a la orden de compra.
+- **Tiempos estimados:** minutos por viaje, por comprar/vender y por fabricación son editables en «Mis datos» (el juego no los publica): el silver/hora siempre se rotula «estimado». La tarifa de estación por fabricación también la pones tú.
+
+Pendiente (Fase 7): alertas y pulido final.
 
 ## Usarla
 
 1. Actualiza tu Worker con [`docs/WORKER.md`](docs/WORKER.md).
 2. Abre la app, escribe la dirección de tu Worker y tu clave, y pulsa **Conectar**. Se guardan solo en ese dispositivo.
-3. Pruebas: `npm install && npm test` (70 pruebas: Worker, lógica de la app, motor de profit y estrategias).
+3. Pruebas: `npm install && npm test` (87 pruebas: Worker, lógica de la app, motor de profit y estrategias).
 
 Los datos del juego (`data/game/*.json`) se generan con `python3 scripts/build-data.py <carpeta data de Silver Master>`.
 

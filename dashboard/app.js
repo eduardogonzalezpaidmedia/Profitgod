@@ -5,10 +5,11 @@ import { parseItem, fmt } from '../data/items.js';
 import { CITIES } from '../markets/cities.js';
 import { HOURS, RISKS } from '../settings/defaults.js';
 
-import { $, el, chip, num } from './dom.js';
+import { $, el, chip, num, numDec } from './dom.js';
 import { mountCalc } from './calc.js';
 import { mountStrat } from './strat.js';
 import { mountFlip } from './flip.js';
+import { mountHoy } from './hoy.js';
 import { makeSources } from '../data/sources.js';
 import { SERVERS } from '../data/public.js';
 let cfg = load(), api = makeApi(cfg), src = makeSources(cfg);
@@ -22,15 +23,18 @@ function initForm() {
   $('silver').value = cfg.silver ? fmt(cfg.silver) : ''; $('premium').value = cfg.premium ? '1' : '0';
   fillSelect($('server'), SERVERS.map(x => x[0]), cfg.server, k => SERVERS.find(x => x[0] === k)[1]); $('usePublic').value = cfg.usePublic ? '1' : '0'; $('proxy').value = cfg.proxy || '';
   $('feeMin').value = cfg.stationFeeMin; $('feeMax').value = cfg.stationFeeMax;
+  ['tripMin', 'actionMin', 'craftMin', 'craftFee', 'anomalyPct', 'reservePct'].forEach(k => { $(k).value = String(cfg[k]).replace('.', ','); });
 }
 function readCfg() {
   cfg = Object.assign(cfg, { url: $('url').value.trim(), key: $('key').value.trim(), hours: +$('hours').value, city: $('city').value, risk: $('risk').value,
     silver: num($('silver').value), premium: $('premium').value === '1', focus: 0, stationFeeMin: num($('feeMin').value), stationFeeMax: num($('feeMax').value) });
   if (cfg.stationFeeMax < cfg.stationFeeMin) cfg.stationFeeMax = cfg.stationFeeMin;
+  [['tripMin', 15], ['actionMin', 5], ['craftMin', 0.5]].forEach(([k, d]) => { const v = numDec($(k).value); cfg[k] = v !== null && v >= 0 ? v : d; });
+  cfg.craftFee = num($('craftFee').value); cfg.anomalyPct = num($('anomalyPct').value) || 20; cfg.reservePct = Math.min(90, num($('reservePct').value));
   cfg.usePublic = $('usePublic').value === '1'; cfg.server = $('server').value; cfg.proxy = $('proxy').value.trim();
   save(cfg); api = makeApi(cfg); src = makeSources(cfg);
 }
-['url', 'key', 'usePublic', 'server', 'proxy', 'hours', 'city', 'risk', 'silver', 'premium', 'feeMin', 'feeMax'].forEach(id => $(id).addEventListener('change', () => { readCfg(); if (id === 'silver') $('silver').value = cfg.silver ? fmt(cfg.silver) : ''; }));
+['url', 'key', 'usePublic', 'server', 'proxy', 'hours', 'city', 'risk', 'silver', 'premium', 'feeMin', 'feeMax', 'tripMin', 'actionMin', 'craftMin', 'craftFee', 'anomalyPct', 'reservePct'].forEach(id => $(id).addEventListener('change', () => { readCfg(); if (id === 'silver') $('silver').value = cfg.silver ? fmt(cfg.silver) : ''; }));
 
 async function connect() {
   readCfg(); const msg = $('connMsg'); msg.className = 'msg'; msg.textContent = 'Conectando…'; $('btnTest').disabled = true;
@@ -84,8 +88,9 @@ initForm(); if (api.on()) connect();
 // pestañas: #datos y #calc
 const calc = mountCalc($('viewCalc'), { getCfg: () => cfg, getApi: () => api, getSrc: () => src });
 const strat = mountStrat($('viewStrat'), { getCfg: () => cfg, getApi: () => api, getSrc: () => src });
+const hoy = mountHoy($('viewHoy'), { getCfg: () => cfg, getApi: () => api, getSrc: () => src });
 const flip = mountFlip($('viewFlip'), { getCfg: () => cfg, getApi: () => api, getSrc: () => src });
-function route() { const v = location.hash === '#calc' ? 'calc' : location.hash === '#estrategias' ? 'estrategias' : location.hash === '#flipping' ? 'flipping' : 'datos'; $('viewData').hidden = v !== 'datos'; $('viewFlip').hidden = v !== 'flipping'; $('viewCalc').hidden = v !== 'calc'; $('viewStrat').hidden = v !== 'estrategias';
-  document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); if (v === 'calc') calc.show(); if (v === 'estrategias') strat.show(); if (v === 'flipping') flip.show(); window.scrollTo(0, 0); }
+function route() { const v = location.hash === '#hoy' ? 'hoy' : location.hash === '#calc' ? 'calc' : location.hash === '#estrategias' ? 'estrategias' : location.hash === '#flipping' ? 'flipping' : 'datos'; $('viewData').hidden = v !== 'datos'; $('viewFlip').hidden = v !== 'flipping'; $('viewHoy').hidden = v !== 'hoy'; $('viewCalc').hidden = v !== 'calc'; $('viewStrat').hidden = v !== 'estrategias';
+  document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); if (v === 'hoy') hoy.show(); if (v === 'calc') calc.show(); if (v === 'estrategias') strat.show(); if (v === 'flipping') flip.show(); window.scrollTo(0, 0); }
 window.addEventListener('hashchange', route); route();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

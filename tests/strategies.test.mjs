@@ -27,7 +27,7 @@ t('A) vender materiales: 120 × 600 − 8 % = 66.240', () => { const r = run(); 
 t('fabricar y vender en la ciudad: números a mano', () => {
   const o = find(run(), 'Fabricar y vender', 'T4_2H_CROSSBOW');
   eq([o.crafts, o.units, o.saleCity], [11, 11, 'Caerleon']);
-  eq(o.value, 71638, 'profit = 88.000 − 7.040 de impuesto − 9.322 de tablas'); eq(o.vsSell, 71638 - 66240);
+  eq(o.value, 71638, 'profit = 88.000 − 7.040 de impuesto − 9.322 de tablas'); eq(o.vsSell, 71638 + 4416 - 66240, 'frente a vender todo: el profit más los 8 lingotes que sobran vendidos (8 × 600 − 8 %)');
   eq(o.materialsUsed, 112, 'lingotes usados = 12 × 11 × (1 − 15,25 %)'); eq(o.leftover, 8);
 });
 t('fabricar → Mercado Negro: más valor, es la mejor opción', () => {
