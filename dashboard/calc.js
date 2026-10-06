@@ -4,6 +4,7 @@ import { loadGameData, QUALITIES, CATEGORY_LABEL } from '../crafting/recipes.js'
 import { evaluate } from '../profit-engine/scenario.js';
 import { freshness, ageText } from '../data/freshness.js';
 import { fmt } from '../data/items.js';
+import { refineVsBuy } from '../refining/refining.js';
 const pc = (n, d = 1) => n.toFixed(d).replace('.', ',') + '%';
 
 export function mountCalc(root, ctx) {
@@ -12,7 +13,7 @@ export function mountCalc(root, ctx) {
     itemId: null, units: 10, quality: 1, buyCity: 'Lymhurst', craftCity: 'Lymhurst', saleCity: 'Black Market',
     premium: null, focus: false, manualRate: '', dailyBonus: '', feeMode: 'total', feeTotal: '', feeNutrition: '', feeUse: 'max',
     transportTotal: '', transportPerUnit: '', otherCosts: '', minutes: '', mode: 'instant', overrides: { instant: {}, order: {}, saleInstant: null, saleOrder: null },
-    market: {}, saleMarket: {}, priceMsg: '', priceBusy: false
+    market: {}, saleMarket: {}, buyProduct: null, priceMsg: '', priceBusy: false
   };
   const ui = {};
 
@@ -64,8 +65,8 @@ export function mountCalc(root, ctx) {
 
     const c3 = el('section', 'card'); ui.resCard = c3; c3.appendChild(el('h2', '', 'Resultado'));
     ui.seg = el('div', 'seg'); [['instant', 'INSTANT'], ['order', 'ORDEN']].forEach(([m, t]) => { const b = el('button', m === S.mode ? 'on' : '', t); b.dataset.m = m; b.addEventListener('click', () => { S.mode = m; ui.seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.m === m)); calc(); }); ui.seg.appendChild(b); });
-    ui.modeHint = el('p', 'hint'); ui.sum = el('div'); ui.mats = el('div'); ui.bd = el('div'); ui.cmp = el('div');
-    c3.append(ui.seg, ui.modeHint, ui.sum, ui.mats, ui.bd, ui.cmp); root.appendChild(c3); c3.hidden = true;
+    ui.modeHint = el('p', 'hint'); ui.sum = el('div'); ui.mats = el('div'); ui.bd = el('div'); ui.refine = el('div'); ui.cmp = el('div');
+    c3.append(ui.seg, ui.modeHint, ui.sum, ui.mats, ui.bd, ui.refine, ui.cmp); root.appendChild(c3); c3.hidden = true;
   }
   function syncFee() {
     const n = S.feeMode === 'nutricion'; ui.feeTotalL.hidden = n; ui.feeNutL.hidden = !n; ui.feeUse.parentElement.hidden = !n;
@@ -82,7 +83,7 @@ export function mountCalc(root, ctx) {
       row.appendChild(l); row.addEventListener('click', () => choose(it.item_id)); ui.results.appendChild(row); });
   }
   function choose(id) {
-    S.itemId = id; S.overrides = { instant: {}, order: {}, saleInstant: null, saleOrder: null }; S.market = {}; S.saleMarket = {}; ui.results.replaceChildren(); ui.q.value = '';
+    S.itemId = id; S.overrides = { instant: {}, order: {}, saleInstant: null, saleOrder: null }; S.market = {}; S.saleMarket = {}; S.buyProduct = null; ui.results.replaceChildren(); ui.q.value = '';
     const it = game.item(id), b = game.bonusCity(it);
     ui.sel.replaceChildren(el('div', 'big', game.label(id)), el('p', 'hint', (CATEGORY_LABEL[it.category] || it.category) + ' · estación: ' + (game.stations[it.crafting_station] || it.crafting_station || '—') + (b ? ' · con bono de ciudad en ' + b : ' · sin ciudad con bono verificado') + ' · ' + id));
     ui.resCard.hidden = false; refreshPrices();
@@ -91,14 +92,15 @@ export function mountCalc(root, ctx) {
   // ---------- precios desde tu base ----------
   async function refreshPrices() {
     if (!S.itemId) return;
-    const api = ctx.getApi(), rec = game.recipe(S.itemId); S.market = {}; S.saleMarket = {};
+    const api = ctx.getApi(), rec = game.recipe(S.itemId); S.market = {}; S.saleMarket = {}; S.buyProduct = null;
     if (!api.on()) { S.priceMsg = 'Sin conexión a tu base: escribe los precios a mano (modo simulación) o conecta tu base en «Mis datos».'; return calc(true); }
     S.priceBusy = true; S.priceMsg = 'Leyendo precios de tu base…'; calc(true);
     try {
       const mats = [...new Set(rec.materials.map(m => m.item_id))];
-      const [pm, ps] = await Promise.all([api.prices(mats, [S.buyCity], [1]), api.prices([S.itemId], [S.saleCity], [S.quality])]);
+      const isRef = game.item(S.itemId).category === 'refined';
+      const [pm, ps, pb] = await Promise.all([api.prices(mats, [S.buyCity], [1]), api.prices([S.itemId], [S.saleCity], [S.quality]), isRef ? api.prices([S.itemId], [S.buyCity], [S.quality]) : Promise.resolve(null)]);
       const mk = r => ({ sell_min: r.sell.price, buy_max: r.buy.price, sellAge: r.sell.age_min, buyAge: r.buy.age_min });
-      pm.rows.forEach(r => { S.market[r.item_id] = mk(r); }); const sr = ps.rows[0]; S.saleMarket = sr ? mk(sr) : {};
+      pm.rows.forEach(r => { S.market[r.item_id] = mk(r); }); const sr = ps.rows[0]; S.saleMarket = sr ? mk(sr) : {}; if (pb) S.buyProduct = pb.rows[0] ? mk(pb.rows[0]) : {};
       S.priceMsg = '';
     } catch (e) { S.priceMsg = e.message; }
     S.priceBusy = false; calc(true);
@@ -136,7 +138,7 @@ export function mountCalc(root, ctx) {
     if (e.base.rr.mode === 'MANUAL' && e.base.rr.rate === null) box.appendChild(el('div', 'warn bad', 'Esta ubicación no tiene fórmula de retorno verificada: escribe el retorno a mano.'));
     ui.sum.replaceChildren(box);
     if (rebuildMats === true || !ui.mats.firstChild) drawMats(e); else updateMatSources(e);
-    drawBreakdown(sc, r, e); drawCompare(e);
+    drawBreakdown(sc, r, e); drawRefine(e); drawCompare(e);
   }
 
   function drawMats(e) {
@@ -190,6 +192,19 @@ export function mountCalc(root, ctx) {
     if (S.feeMode === 'nutricion' && sc.feeRange.min !== sc.feeRange.max && r.profit !== null) row(t, 'Rango por tasa 300–900: de ' + fmt(r.profit + (r.craftingFee - sc.feeRange.max)) + ' a ' + fmt(r.profit + (r.craftingFee - sc.feeRange.min)), '', '', true);
     ui.bd.replaceChildren(t);
   }
+  function drawRefine(e) {
+    if (e.item.category !== 'refined') { ui.refine.replaceChildren(); return; }
+    const rv = refineVsBuy({ units: e.base.instant.calc.made, buyMarket: S.buyProduct || {}, refine: { instant: e.base.instant.calc, order: e.base.order.calc }, setupPct: game.settings.taxes.setup_fee_pct, transportTotal: num(S.transportTotal), transportPerUnit: num(S.transportPerUnit) });
+    const box = el('div'); box.appendChild(el('h2', '', '¿Refinar o comprar el refinado ya hecho?'));
+    box.appendChild(el('p', 'hint', 'Mismas unidades y mismo destino de venta (' + S.saleCity + '). «Comprar directo» = comprar ' + game.name(S.itemId) + ' en ' + S.buyCity + ' y venderlo, sin refinar.'));
+    const t = el('table'), hr = el('tr'); ['', 'INSTANT', 'ORDEN'].forEach(x => hr.appendChild(el('th', '', x))); t.appendChild(hr);
+    const line = (label, f) => { const tr = el('tr'); tr.appendChild(el('td', '', label)); ['instant', 'order'].forEach(m => { const v = f(rv[m]); tr.appendChild(el('td', typeof v === 'number' && v < 0 ? 'neg' : '', v === null || v === undefined ? '—' : typeof v === 'number' ? fmt(v) : v)); }); t.appendChild(tr); };
+    line('Precio de compra del refinado', x => x.unitBuy); line('Profit refinando', x => x.refineProfit); line('Profit comprando directo', x => x.directProfit);
+    line('Conviene', x => x.better === 'refinar' ? 'Refinar (+' + fmt(x.diff) + ')' : x.better === 'comprar' ? 'Comprar directo (+' + fmt(-x.diff) + ')' : x.better === 'igual' ? 'Igual' : 'Datos insuficientes');
+    box.appendChild(t);
+    if (!S.buyProduct || !Object.keys(S.buyProduct).length) box.appendChild(el('div', 'warn', 'Tu base no tiene el precio de este refinado en ' + S.buyCity + ': no se puede comparar. Míralo en ese mercado del juego.'));
+    ui.refine.replaceChildren(box);
+  }
   function drawCompare(e) {
     const box = el('div'); box.appendChild(el('h2', '', 'Comparación (solo informativa)'));
     box.appendChild(el('p', 'hint', (!S.premium && !S.focus ? 'Tu escenario es sin Premium y sin Focus. ' : '') + 'Estos números muestran qué cambiaría; nunca se usan para recomendarte operaciones.' + (!S.focus && numDec(S.manualRate) !== null ? ' La comparación con Focus no aparece porque escribiste un retorno manual.' : '')));
@@ -201,5 +216,5 @@ export function mountCalc(root, ctx) {
     box.appendChild(t); ui.cmp.replaceChildren(box);
   }
 
-  return { show };
+  return { show, game: () => game };
 }

@@ -7,7 +7,7 @@ export function calculateMaterialCost(lines) {
   const out = [], missing = [];
   let total = 0;
   for (const l of lines) {
-    const ok = isNum(l.price) && l.price > 0 && isNum(l.quantity);
+    const ok = isNum(l.price) && (l.price > 0 || l.free === true) && isNum(l.quantity);
     if (!ok) missing.push(l.item_id);
     const cost = ok ? l.quantity * l.price : null;
     if (ok) total += cost;
@@ -102,14 +102,15 @@ export function craftBatch(p) {
   const lines = (r ? r.materials : []).map(m => {
     const gross = m.quantity * crafts;
     const ret = calculateReturn(gross, p.returnRate, m.returnable);
-    const price = p.prices ? p.prices[m.item_id] : null;
+    const owned = !!(p.owned && p.owned[m.item_id]);   // material que ya tienes: no se compra (su valor se cuenta aparte)
+    const price = owned ? 0 : (p.prices ? p.prices[m.item_id] : null);
     return {
       item_id: m.item_id, perCraft: m.quantity, returnable: m.returnable !== false,
       gross, recovered: ret ? ret.recovered : null, needed: ret ? ret.net : null,
-      toBuy: ret ? Math.ceil(ret.net) : null, price: isNum(price) ? price : null
+      toBuy: ret ? Math.ceil(ret.net) : null, price: isNum(price) ? price : null, free: owned
     };
   });
-  const mc = calculateMaterialCost(lines.map(l => ({ item_id: l.item_id, quantity: l.needed, price: l.price })));
+  const mc = calculateMaterialCost(lines.map(l => ({ item_id: l.item_id, quantity: l.needed, price: l.price, free: l.free })));
   mc.lines.forEach((l, i) => { lines[i].cost = l.cost; });
   if (mc.missing.length) reasons.push('Falta precio de ' + mc.missing.length + ' material(es)');
   const fee = calculateCraftingFee(p.craftingFee && p.craftingFee.value, made, p.craftingFee && p.craftingFee.mode);

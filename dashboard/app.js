@@ -7,6 +7,7 @@ import { HOURS, RISKS } from '../settings/defaults.js';
 
 import { $, el, chip, num } from './dom.js';
 import { mountCalc } from './calc.js';
+import { mountStrat } from './strat.js';
 let cfg = load(), api = makeApi(cfg);
 
 function fillSelect(sel, items, cur, label) { sel.replaceChildren(); items.forEach(v => { const o = el('option', '', label ? label(v) : v); o.value = v; sel.appendChild(o); }); sel.value = cur; }
@@ -73,7 +74,8 @@ $('dlgClose').addEventListener('click', () => $('dlg').close());
 initForm(); if (api.on()) connect();
 // pestañas: #datos y #calc
 const calc = mountCalc($('viewCalc'), { getCfg: () => cfg, getApi: () => api });
-function route() { const v = location.hash === '#calc' ? 'calc' : 'datos'; $('viewData').hidden = v !== 'datos'; $('viewCalc').hidden = v !== 'calc';
-  document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); if (v === 'calc') calc.show(); window.scrollTo(0, 0); }
+const strat = mountStrat($('viewStrat'), { getCfg: () => cfg, getApi: () => api });
+function route() { const v = location.hash === '#calc' ? 'calc' : location.hash === '#estrategias' ? 'estrategias' : 'datos'; $('viewData').hidden = v !== 'datos'; $('viewCalc').hidden = v !== 'calc'; $('viewStrat').hidden = v !== 'estrategias';
+  document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); if (v === 'calc') calc.show(); if (v === 'estrategias') strat.show(); window.scrollTo(0, 0); }
 window.addEventListener('hashchange', route); route();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

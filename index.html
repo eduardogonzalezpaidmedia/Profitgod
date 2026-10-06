@@ -8,14 +8,14 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<link rel="stylesheet" href="dashboard/styles.css?v=0.2">
+<link rel="stylesheet" href="dashboard/styles.css?v=0.3">
 </head>
 <body>
 <header class="top">
   <div class="brand"><span class="logo">◆</span> Profit God</div>
-  <span class="ver" id="ver">v0.2</span>
+  <span class="ver" id="ver">v0.3</span>
 </header>
-<nav class="tabs"><a href="#datos" class="on">Mis datos</a><a href="#calc">Calculadora</a></nav>
+<nav class="tabs"><a href="#datos" class="on">Mis datos</a><a href="#calc">Calculadora</a><a href="#estrategias">Estrategias</a></nav>
 <main id="viewData">
   <section class="card" id="cConn">
     <h2>Tu base de datos</h2>
@@ -53,8 +53,9 @@
   </section>
 </main>
 <main id="viewCalc" hidden></main>
+<main id="viewStrat" hidden></main>
 
 <dialog id="dlg"><div id="dlgBody"></div><div class="row end"><button id="dlgClose">Cerrar</button></div></dialog>
-<script type="module" src="dashboard/app.js?v=0.2"></script>
+<script type="module" src="dashboard/app.js?v=0.3"></script>
 </body>
 </html>

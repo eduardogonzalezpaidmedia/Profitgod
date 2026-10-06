@@ -47,8 +47,25 @@ export function makeGameData(raw) {
   }
   const bonusCity = it => { for (const c of cities) if (bonusFor(it, c.id).kind) return c.id; return null; };
 
+  // índice: material → recetas que lo usan
+  const usedInIdx = new Map();
+  for (const r of recipes.values()) for (const m of r.materials) { if (!usedInIdx.has(m.item_id)) usedInIdx.set(m.item_id, []); usedInIdx.get(m.item_id).push(r.product); }
+  /** Búsqueda de materiales y recursos (incluye lo refinado): «lingote t4», «mineral». */
+  function searchMat(q, limit = 25) {
+    const n = norm(q).trim(); if (!n) return [];
+    let tier = null, words = n; const te = /\bt?([2-8])(?:\.([0-4]))?\b/.exec(n);
+    if (te) { tier = +te[1]; words = n.replace(te[0], ' '); }
+    const ws = words.split(/\s+/).filter(Boolean), out = [];
+    for (const [id, nm] of mats) {
+      if (!usedInIdx.has(id)) continue;
+      if (tier !== null && tierOf(id) !== tier) continue;
+      if (ws.every(w => (norm(nm) + ' ' + norm(id)).includes(w))) { out.push({ item_id: id, name: nm }); if (out.length >= limit) break; }
+    }
+    return out;
+  }
+
   return { items, byId, recipes, cities, cityById, settings: raw.settings, stations: raw.stations, meta: raw.items.meta,
-    item: id => byId.get(id) || null, recipe: id => recipes.get(id) || null, name, label, tierOf, enchOf, search, bonusFor, bonusCity,
+    usedIn: id => usedInIdx.get(id) || [], searchMat, item: id => byId.get(id) || null, recipe: id => recipes.get(id) || null, name, label, tierOf, enchOf, search, bonusFor, bonusCity,
     craftCities: () => cities.filter(c => c.type !== 'black_market').map(c => c.id), marketCities: () => cities.filter(c => c.market).map(c => c.id) };
 }
 
