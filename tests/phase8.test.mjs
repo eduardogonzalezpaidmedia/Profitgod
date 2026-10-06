@@ -69,3 +69,22 @@ t('referencia: retorno 15,25 % base, impuestos y bonos solo verificados', () => 
   const r = referenceTables(game); eq(r.rr.rows[0], ['Ciudad real, sin bono', '+18', '15,3 %'].slice(0, 2).concat([r.rr.rows[0][2]]));
   ok(r.rr.rows[0][2].startsWith('15,')); ok(r.taxes.rows.some(x => x[1] === '8 %') && r.taxes.rows.some(x => x[1] === '4 %')); ok(r.cities.rows.length >= 5); ok(r.sources.length >= 3);
 });
+
+import { priceCard, searchAny } from '../tools/pricecard.js';
+import { makeSources } from '../data/sources.js';
+t('ficha de precio: mejor compra/venta, margen neto y datos viejos fuera', () => {
+  const row = (sell, sa, buy, ba) => ({ sell: { price: sell, age_min: sa, src: 'propio' }, buy: { price: buy, age_min: ba, src: 'público' } });
+  const m = { 'Lymhurst|1': row(1000, 5, 900, 5), 'Caerleon|1': row(1200, 5, 2000, 5), 'Bridgewatch|1': row(100, 3000, 0, null) };
+  const c = priceCard({ game, id: 'T4_BAG', cities: ['Lymhurst', 'Caerleon', 'Bridgewatch'], qualities: [1, 2], premium: false, market: (ci, i, q) => m[ci + '|' + q] || null });
+  eq(c.byQ[0].bestBuy, { city: 'Lymhurst', price: 1000 }); eq(c.byQ[0].bestSell, { city: 'Caerleon', price: 2000 }); eq(c.byQ[0].margin, 2000 - 160 - 1000);
+  eq(c.byQ[1].withData, 0); eq(c.byQ[0].rows[2].sell, 100);
+});
+t('buscador de ficha: encuentra objetos y materiales', () => { ok(searchAny(game, 't4 espada').length > 0); ok(searchAny(game, 'lingote t4').some(x => x.item_id === 'T4_METALBAR')); eq(searchAny(game, ''), []); });
+t('memoria compartida: la 2.ª lectura no vuelve a consultar; con error no se guarda; clear() borra', async () => {
+  let calls = 0; const pub = { on: () => true, prices: async () => { calls++; return [{ item_id: 'T4_BAG', city: 'Lymhurst', quality: 1, sell: { price: 5, t: Date.now() - 60000 }, buy: { price: 0, t: null } }]; }, stats: {} };
+  const s = makeSources({ usePublic: true }, { own: { on: () => false }, pub });
+  await s.prices(['T4_BAG'], ['Lymhurst'], [1]); const r2 = await s.prices(['T4_BAG'], ['Lymhurst'], [1]); eq(calls, 1); ok(r2.rows.length === 1 || r2.rows.length === 0);
+  s.clear(); await s.prices(['T4_BAG'], ['Lymhurst'], [1]); eq(calls, 2);
+  const bad = { on: () => true, prices: async () => { calls++; return []; }, stats: { lastError: 'x' } }, s2 = makeSources({ usePublic: true }, { own: { on: () => false }, pub: bad });
+  const c0 = calls; await s2.prices(['T4_BAG'], ['Lymhurst'], [1]); await s2.prices(['T4_BAG'], ['Lymhurst'], [1]); eq(calls - c0, 2);
+});

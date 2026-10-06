@@ -1,19 +1,19 @@
-import { load, save } from '../data/store.js?v=0.8';
-import { makeApi } from '../data/api.js?v=0.8';
-import { ageText } from '../data/freshness.js?v=0.8';
-import { parseItem, fmt } from '../data/items.js?v=0.8';
-import { CITIES } from '../markets/cities.js?v=0.8';
-import { HOURS, RISKS } from '../settings/defaults.js?v=0.8';
+import { load, save } from '../data/store.js?v=0.9';
+import { makeApi } from '../data/api.js?v=0.9';
+import { ageText } from '../data/freshness.js?v=0.9';
+import { parseItem, fmt } from '../data/items.js?v=0.9';
+import { CITIES } from '../markets/cities.js?v=0.9';
+import { HOURS, RISKS } from '../settings/defaults.js?v=0.9';
 
-import { $, el, chip, num, numDec } from './dom.js?v=0.8';
-import { mountCalc } from './calc.js?v=0.8';
-import { mountStrat } from './strat.js?v=0.8';
-import { mountInicio } from './inicio.js?v=0.8';
-import { mountOps } from './ops.js?v=0.8';
-import { mountTools } from './tools.js?v=0.8';
-import { makeJournal } from '../data/journal.js?v=0.8';
-import { makeSources } from '../data/sources.js?v=0.8';
-import { SERVERS } from '../data/public.js?v=0.8';
+import { $, el, chip, num, numDec } from './dom.js?v=0.9';
+import { mountCalc } from './calc.js?v=0.9';
+import { mountStrat } from './strat.js?v=0.9';
+import { mountInicio } from './inicio.js?v=0.9';
+import { mountOps } from './ops.js?v=0.9';
+import { mountTools } from './tools.js?v=0.9';
+import { makeJournal } from '../data/journal.js?v=0.9';
+import { makeSources } from '../data/sources.js?v=0.9';
+import { SERVERS } from '../data/public.js?v=0.9';
 let cfg = load(), api = makeApi(cfg), src = makeSources(cfg);
 
 function fillSelect(sel, items, cur, label) { sel.replaceChildren(); items.forEach(v => { const o = el('option', '', label ? label(v) : v); o.value = v; sel.appendChild(o); }); sel.value = cur; }
@@ -84,7 +84,7 @@ $('btnPub').addEventListener('click', async () => {
   readCfg(); const m = $('pubMsg'); m.className = 'msg'; m.textContent = 'Probando…'; $('btnPub').disabled = true;
   const r = await src.pub.test(); m.className = 'msg ' + (r.ok ? 'ok' : 'err'); m.textContent = r.ok ? 'Funciona: la API pública responde (' + src.pub.host.replace('https://', '') + ').' : r.error; $('btnPub').disabled = false;
 });
-$('btnTest').addEventListener('click', connect); $('btnRefresh').addEventListener('click', recent); $('rcCity').addEventListener('change', recent);
+$('btnTest').addEventListener('click', connect); $('btnRefresh').addEventListener('click', () => { src.clear(); recent(); }); $('rcCity').addEventListener('change', recent);
 $('dlgClose').addEventListener('click', () => $('dlg').close());
 initForm(); if (api.on()) connect();
 // pestañas: #datos y #calc

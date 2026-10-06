@@ -1,20 +1,21 @@
 // Herramientas: planificador de varios ítems (con Cocina y Alquimia), flips de encanto, historial del oro y tablas de referencia.
-import { el, chip, field, select, input, num } from './dom.js?v=0.8';
-import { loadGameData, CATEGORY_LABEL } from '../crafting/recipes.js?v=0.8';
-import { planCrafts, plannerIds } from '../tools/planner.js?v=0.8';
-import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.8';
-import { goldStats } from '../tools/gold.js?v=0.8';
-import { referenceTables } from '../tools/reference.js?v=0.8';
-import { freshness, ageText } from '../data/freshness.js?v=0.8';
-import { fmt } from '../data/items.js?v=0.8';
+import { el, chip, field, select, input, num } from './dom.js?v=0.9';
+import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.9';
+import { planCrafts, plannerIds } from '../tools/planner.js?v=0.9';
+import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.9';
+import { goldStats } from '../tools/gold.js?v=0.9';
+import { priceCard, searchAny } from '../tools/pricecard.js?v=0.9';
+import { referenceTables } from '../tools/reference.js?v=0.9';
+import { freshness, ageText } from '../data/freshness.js?v=0.9';
+import { fmt } from '../data/items.js?v=0.9';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
-const SUBS = [['plan', '🧮 Planificador'], ['ench', '✨ Encantar'], ['oro', '🪙 Oro'], ['ref', '📚 Referencia']];
+const SUBS = [['precio', '🔎 Precio'], ['plan', '🧮 Planificador'], ['ench', '✨ Encantar'], ['oro', '🪙 Oro'], ['ref', '📚 Referencia']];
 const PRESETS = [['', 'Todo'], ['food', '🍲 Cocina'], ['potion', '⚗️ Alquimia'], ['ore', 'Refinado (mineral)'], ['wood', 'Refinado (madera)'], ['fiber', 'Refinado (fibra)'], ['hide', 'Refinado (piel)'], ['rock', 'Refinado (piedra)']];
 
 export function mountTools(root, ctx) {
-  let game = null, built = false, sub = 'plan';
+  let game = null, built = false, sub = 'precio';
   const P = { items: [], buyCity: 'Lymhurst', craftCity: 'Lymhurst', saleCity: 'Caerleon', premium: false, focus: false, fee: '', station: '' }, E = { tier: 6, category: 'weapons', cost: { 1: '', 2: '', 3: '', 4: '' } }, ui = {};
 
   async function show(which) {
@@ -29,10 +30,44 @@ export function mountTools(root, ctx) {
   }
   function drawSub() {
     ui.bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === sub)); ui.body.replaceChildren();
-    ({ plan: drawPlan, ench: drawEnch, oro: drawGold, ref: drawRef })[sub]();
+    ({ precio: drawPrice, plan: drawPlan, ench: drawEnch, oro: drawGold, ref: drawRef })[sub]();
   }
   const noSrc = () => !ctx.getSrc().usable();
   const errText = e => e && e.message && e.message.includes('Failed to fetch') ? 'No se pudo conectar con tu base.' : (e && e.message) || String(e);
+
+  // ---------- Ficha de precio ----------
+  function drawPrice() {
+    const c = el('section', 'card'); c.appendChild(el('h2', '', 'Precio de un ítem'));
+    c.appendChild(el('p', 'hint', 'Busca cualquier objeto o material y mira su precio en todas las ciudades y calidades. Cada dato dice si viene de tu base (propio) o de Albion Data Project (público) y qué tan viejo es. Es la misma lectura de precios que usan todas las pestañas.'));
+    ui.pq = input('', onPriceSearch, { type: 'search', placeholder: 'Ej.: espada ancha 6.1, lingote t4, poción de curación', autocomplete: 'off' }); ui.pres = el('div', 'list pick'); c.append(ui.pq, ui.pres);
+    ui.pOut = el('section', 'card'); ui.pOut.hidden = true; ui.body.append(c, ui.pOut);
+    if (P.priceId) loadPrice(P.priceId);
+  }
+  function onPriceSearch() {
+    ui.pres.replaceChildren(); const q = ui.pq.value.trim(); if (!q) return; const r = searchAny(game, q, 20);
+    if (!r.length) ui.pres.appendChild(el('p', 'hint', 'No encontré ese ítem. Prueba otra palabra o el tier (ej.: t5.1).'));
+    r.forEach(it => { const row = el('div', 'it'), l = el('div'); l.appendChild(el('div', 'nm', it.name)); l.appendChild(el('div', 'sub', it.item_id)); row.appendChild(l); row.addEventListener('click', () => { ui.pres.replaceChildren(); ui.pq.value = ''; loadPrice(it.item_id); }); ui.pres.appendChild(row); });
+  }
+  async function loadPrice(id) {
+    P.priceId = id; const o = ui.pOut; o.hidden = false; o.replaceChildren(el('h2', '', game.label(id)), el('p', 'hint', 'Leyendo precios…'));
+    if (noSrc()) { o.replaceChildren(el('h2', '', game.label(id)), el('p', 'msg err', 'Conecta tu base o activa los datos públicos en Configuración.')); return; }
+    try {
+      const cities = game.marketCities(), qs = QUALITIES.map(x => x.q), r = await ctx.getSrc().prices([id], cities, qs), map = new Map(r.rows.map(x => [x.city + '|' + x.quality, x]));
+      const errs = [...new Set([r.ownError && 'Tu base: ' + r.ownError, r.pubError && 'Datos públicos: ' + r.pubError].filter(Boolean))], card = priceCard({ game, id, cities, qualities: qs, premium: !!ctx.getCfg().premium, market: (c, i, q) => map.get(c + '|' + q) || null });
+      o.replaceChildren(el('h2', '', game.label(id)), el('p', 'hint', id)); if (errs.length) o.appendChild(el('p', 'msg err', errs.join(' · ')));
+      const shown = card.byQ.filter(x => x.withData); if (!shown.length) o.appendChild(el('div', 'warn', 'Datos insuficientes: ni tu base ni los datos públicos tienen precios de este ítem.'));
+      shown.forEach(x => {
+        o.appendChild(el('h3', '', 'Calidad ' + QUALITIES.find(z => z.q === x.quality).label));
+        const t = el('table'), hr = el('tr'); ['Ciudad', 'Venta (más barata)', 'Compra (más alta)', 'Dato'].forEach(h => hr.appendChild(el('th', '', h))); t.appendChild(hr);
+        x.rows.filter(w => w.sell !== null || w.buy !== null).forEach(w => { const tr = el('tr'); tr.appendChild(el('td', '', w.city));
+          const cell = (v, age, src) => { const d = el('td'); d.appendChild(document.createTextNode(v === null ? '—' : fmt(v))); if (v !== null) d.appendChild(el('div', 'sub', (src || '') + ' · ' + ageText(age))); return d; };
+          tr.appendChild(cell(w.sell, w.sellAge, w.sellSrc)); tr.appendChild(cell(w.buy, w.buyAge, w.buySrc)); const c = el('td'); const age = Math.min(...[w.sellAge, w.buyAge].filter(a => a != null)); if (isFinite(age)) c.appendChild(chip(freshness(age * 60000))); tr.appendChild(c); t.appendChild(tr); });
+        const wr = el('div', 'tablewrap'); wr.appendChild(t); o.appendChild(wr);
+        o.appendChild(el('p', 'hint', (x.bestBuy ? 'Más barato para comprar: ' + x.bestBuy.city + ' (' + fmt(x.bestBuy.price) + '). ' : '') + (x.bestSell ? 'Mejor para vender al instante: ' + x.bestSell.city + ' (' + fmt(x.bestSell.price) + '). ' : '') + (x.margin !== null ? 'Diferencia neta (con impuesto ' + card.taxPct + ' %): ' + (x.margin >= 0 ? '+' : '') + fmt(x.margin) + ' por unidad, sin transporte.' : 'Solo se comparan datos de menos de 24 h.')));
+      });
+      o.appendChild(el('p', 'hint', 'Esta lectura se comparte con las demás pestañas durante 3 minutos.')); const b = el('button', '', 'Actualizar ahora'); b.addEventListener('click', () => { ctx.getSrc().clear(); loadPrice(id); }); o.appendChild(b);
+    } catch (e) { o.replaceChildren(el('h2', '', game.label(id)), el('p', 'msg err', errText(e))); }
+  }
 
   // ---------- Planificador ----------
   function drawPlan() {
