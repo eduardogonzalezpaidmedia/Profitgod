@@ -103,3 +103,15 @@ t('lectura: elige el precio más barato con datos de menos de 24 h', () => {
   const rows = [{ city: 'A', sell: { price: 500, age_min: 3000, src: 'propio' } }, { city: 'B', sell: { price: 900, age_min: 10, src: 'público' } }, { city: 'C', sell: { price: 700, age_min: 20, src: 'propio' } }, { city: 'D', sell: { price: 0, age_min: 1 } }];
   eq(cheapest(rows), { price: 700, city: 'C', age: 20, src: 'propio' }); eq(cheapest([]), null);
 });
+
+import { sentence, verdict } from '../dashboard/solo.js';
+const op = (type, via, item, a, b, score, profit) => ({ type, via, item, cityBuy: a, citySell: b, score, profit, units: 10 });
+t('solo plata: frases simples por tipo de camino', () => {
+  ok(sentence(op('flipping', 'comprar y llevar', 'Lingote', 'Lymhurst', 'Caerleon', 50, 1)).includes('Compra 10 Lingote en Lymhurst, llévalos a Caerleon') && sentence(op('flipping', 'comprar y llevar', 'X', 'A', 'B', 1, 1)).includes('otra ciudad'));
+  ok(sentence(op('refining', 'refinar', 'Plancha', 'Fort Sterling', 'Caerleon', 1, 1)).startsWith('Refina 10 Plancha en Fort Sterling'));
+  ok(sentence(op('blackmarket', 'fabricar', 'Ballesta', 'Martlock', 'Black Market', 1, 1)).includes('Mercado Negro'));
+});
+t('solo plata: veredicto = mejor por tipo y mejor general, sin ganancia o sin score no cuenta', () => {
+  const v = verdict([op('flipping', 'comprar y llevar', 'A', 'x', 'y', 60, 100), op('refining', 'refinar', 'B', 'x', 'y', 80, 50), op('refining', 'refinar', 'C', 'x', 'y', 70, 500), op('crafting', 'fabricar', 'D', 'x', 'y', null, 900), op('crafting', 'fabricar', 'E', 'x', 'y', 99, -5)]);
+  eq(v.top.item, 'B'); eq(v.best.refining.item, 'B'); eq(v.best.crafting, undefined); eq(v.best.flipping.item, 'A'); eq(verdict([]).top, null);
+});

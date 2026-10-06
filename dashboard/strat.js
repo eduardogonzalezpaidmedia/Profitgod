@@ -1,9 +1,10 @@
 // «Tengo estos materiales»: vender, refinar o fabricar con ellos. Usa tu base; nada se inventa.
-import { el, chip, field, select, input, num } from './dom.js?v=0.11';
-import { loadGameData } from '../crafting/recipes.js?v=0.11';
-import { compareStrategies, neededIds } from '../profit-engine/strategies.js?v=0.11';
-import { freshness, ageText } from '../data/freshness.js?v=0.11';
-import { fmt } from '../data/items.js?v=0.11';
+import { el, chip, field, select, input, num } from './dom.js?v=0.12';
+import { loadGameData } from '../crafting/recipes.js?v=0.12';
+import { compareStrategies, neededIds } from '../profit-engine/strategies.js?v=0.12';
+import { freshness, ageText } from '../data/freshness.js?v=0.12';
+import { fmt } from '../data/items.js?v=0.12';
+import { mountSolo } from './solo.js?v=0.12';
 
 export function mountStrat(root, ctx) {
   let game = null, built = false, last = null;
@@ -16,7 +17,7 @@ export function mountStrat(root, ctx) {
     const cfg = ctx.getCfg(); S.silver = cfg.silver ? String(cfg.silver) : ''; S.craftCity = cfg.city || 'Lymhurst'; S.buyCity = S.craftCity; S.premium = !!cfg.premium; S.maxTier = cfg.maxTier || 8; build();
   }
   function build() {
-    built = true; root.replaceChildren();
+    built = true; root.replaceChildren(); const soloBox = el('div'); root.appendChild(soloBox); mountSolo(soloBox, ctx, game);
     const c1 = el('section', 'card'); c1.appendChild(el('h2', '', 'Tengo estos materiales'));
     c1.appendChild(el('p', 'hint', 'Agrega uno o varios materiales o recursos que tengas y cuántos de cada uno. Se compara venderlos, refinarlos o fabricar con ellos (y venderlo en la ciudad o en el Mercado Negro).'));
     ui.q = input('', onSearch, { type: 'search', placeholder: 'Ej.: lingote t4, mineral de hierro, cuero t5', autocomplete: 'off' });
