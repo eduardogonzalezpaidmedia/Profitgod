@@ -1,17 +1,18 @@
-import { load, save } from '../data/store.js';
-import { makeApi } from '../data/api.js';
-import { ageText } from '../data/freshness.js';
-import { parseItem, fmt } from '../data/items.js';
-import { CITIES } from '../markets/cities.js';
-import { HOURS, RISKS } from '../settings/defaults.js';
+import { load, save } from '../data/store.js?v=0.7';
+import { makeApi } from '../data/api.js?v=0.7';
+import { ageText } from '../data/freshness.js?v=0.7';
+import { parseItem, fmt } from '../data/items.js?v=0.7';
+import { CITIES } from '../markets/cities.js?v=0.7';
+import { HOURS, RISKS } from '../settings/defaults.js?v=0.7';
 
-import { $, el, chip, num, numDec } from './dom.js';
-import { mountCalc } from './calc.js';
-import { mountStrat } from './strat.js';
-import { mountFlip } from './flip.js';
-import { mountHoy } from './hoy.js';
-import { makeSources } from '../data/sources.js';
-import { SERVERS } from '../data/public.js';
+import { $, el, chip, num, numDec } from './dom.js?v=0.7';
+import { mountCalc } from './calc.js?v=0.7';
+import { mountStrat } from './strat.js?v=0.7';
+import { mountInicio } from './inicio.js?v=0.7';
+import { mountOps } from './ops.js?v=0.7';
+import { makeJournal } from '../data/journal.js?v=0.7';
+import { makeSources } from '../data/sources.js?v=0.7';
+import { SERVERS } from '../data/public.js?v=0.7';
 let cfg = load(), api = makeApi(cfg), src = makeSources(cfg);
 
 function fillSelect(sel, items, cur, label) { sel.replaceChildren(); items.forEach(v => { const o = el('option', '', label ? label(v) : v); o.value = v; sel.appendChild(o); }); sel.value = cur; }
@@ -20,21 +21,21 @@ function initForm() {
   fillSelect($('hours'), HOURS, cfg.hours, h => h < 1 ? h * 60 + ' minutos' : h + (h === 1 ? ' hora' : ' horas'));
   fillSelect($('city'), CITIES, cfg.city); fillSelect($('risk'), RISKS, cfg.risk, r => r[0].toUpperCase() + r.slice(1));
   fillSelect($('rcCity'), ['Todas', ...CITIES], 'Black Market');
-  $('silver').value = cfg.silver ? fmt(cfg.silver) : ''; $('premium').value = cfg.premium ? '1' : '0';
+  $('silver').value = cfg.silver ? fmt(cfg.silver) : ''; $('premium').value = cfg.premium ? '1' : '0'; $('focus').value = cfg.focus ? fmt(cfg.focus) : '';
   fillSelect($('server'), SERVERS.map(x => x[0]), cfg.server, k => SERVERS.find(x => x[0] === k)[1]); $('usePublic').value = cfg.usePublic ? '1' : '0'; $('proxy').value = cfg.proxy || '';
   $('feeMin').value = cfg.stationFeeMin; $('feeMax').value = cfg.stationFeeMax;
   ['tripMin', 'actionMin', 'craftMin', 'craftFee', 'anomalyPct', 'reservePct'].forEach(k => { $(k).value = String(cfg[k]).replace('.', ','); });
 }
 function readCfg() {
   cfg = Object.assign(cfg, { url: $('url').value.trim(), key: $('key').value.trim(), hours: +$('hours').value, city: $('city').value, risk: $('risk').value,
-    silver: num($('silver').value), premium: $('premium').value === '1', focus: 0, stationFeeMin: num($('feeMin').value), stationFeeMax: num($('feeMax').value) });
+    silver: num($('silver').value), premium: $('premium').value === '1', focus: num($('focus').value), stationFeeMin: num($('feeMin').value), stationFeeMax: num($('feeMax').value) });
   if (cfg.stationFeeMax < cfg.stationFeeMin) cfg.stationFeeMax = cfg.stationFeeMin;
   [['tripMin', 15], ['actionMin', 5], ['craftMin', 0.5]].forEach(([k, d]) => { const v = numDec($(k).value); cfg[k] = v !== null && v >= 0 ? v : d; });
   cfg.craftFee = num($('craftFee').value); cfg.anomalyPct = num($('anomalyPct').value) || 20; cfg.reservePct = Math.min(90, num($('reservePct').value));
   cfg.usePublic = $('usePublic').value === '1'; cfg.server = $('server').value; cfg.proxy = $('proxy').value.trim();
   save(cfg); api = makeApi(cfg); src = makeSources(cfg);
 }
-['url', 'key', 'usePublic', 'server', 'proxy', 'hours', 'city', 'risk', 'silver', 'premium', 'feeMin', 'feeMax', 'tripMin', 'actionMin', 'craftMin', 'craftFee', 'anomalyPct', 'reservePct'].forEach(id => $(id).addEventListener('change', () => { readCfg(); if (id === 'silver') $('silver').value = cfg.silver ? fmt(cfg.silver) : ''; }));
+['url', 'key', 'usePublic', 'server', 'proxy', 'hours', 'city', 'risk', 'silver', 'premium', 'focus', 'feeMin', 'feeMax', 'tripMin', 'actionMin', 'craftMin', 'craftFee', 'anomalyPct', 'reservePct'].forEach(id => $(id).addEventListener('change', () => { readCfg(); if (id === 'silver') $('silver').value = cfg.silver ? fmt(cfg.silver) : ''; }));
 
 async function connect() {
   readCfg(); const msg = $('connMsg'); msg.className = 'msg'; msg.textContent = 'Conectando…'; $('btnTest').disabled = true;
@@ -88,9 +89,21 @@ initForm(); if (api.on()) connect();
 // pestañas: #datos y #calc
 const calc = mountCalc($('viewCalc'), { getCfg: () => cfg, getApi: () => api, getSrc: () => src });
 const strat = mountStrat($('viewStrat'), { getCfg: () => cfg, getApi: () => api, getSrc: () => src });
-const hoy = mountHoy($('viewHoy'), { getCfg: () => cfg, getApi: () => api, getSrc: () => src });
-const flip = mountFlip($('viewFlip'), { getCfg: () => cfg, getApi: () => api, getSrc: () => src });
-function route() { const v = location.hash === '#hoy' ? 'hoy' : location.hash === '#calc' ? 'calc' : location.hash === '#estrategias' ? 'estrategias' : location.hash === '#flipping' ? 'flipping' : 'datos'; $('viewData').hidden = v !== 'datos'; $('viewFlip').hidden = v !== 'flipping'; $('viewHoy').hidden = v !== 'hoy'; $('viewCalc').hidden = v !== 'calc'; $('viewStrat').hidden = v !== 'estrategias';
-  document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); if (v === 'hoy') hoy.show(); if (v === 'calc') calc.show(); if (v === 'estrategias') strat.show(); if (v === 'flipping') flip.show(); window.scrollTo(0, 0); }
+const store = (() => { try { localStorage.setItem('profitgod.t', '1'); localStorage.removeItem('profitgod.t'); return localStorage; } catch (e) { const m = new Map(); return { getItem: k => m.has(k) ? m.get(k) : null, setItem: (k, v) => m.set(k, String(v)) }; } })();
+const journal = makeJournal(store);
+/** Cambia la configuración desde otra pantalla (Inicio) y deja todo sincronizado. */
+function update(patch) { Object.assign(cfg, patch); save(cfg); api = makeApi(cfg); src = makeSources(cfg); initForm(); }
+const C = { getCfg: () => cfg, getApi: () => api, getSrc: () => src, update, journal };
+const inicio = mountInicio($('viewInicio'), C), ops = mountOps($('viewOps'), C);
+const VIEWS = { inicio: 'viewInicio', mercado: 'viewMercado', calc: 'viewCalc', estrategias: 'viewStrat', operaciones: 'viewOps', config: 'viewConfig' };
+const OLD = { '#datos': '#config', '#hoy': '#inicio', '#flipping': '#inicio' };      // enlaces de versiones anteriores
+function route() {
+  if (OLD[location.hash]) { history.replaceState(null, '', location.pathname + location.search + OLD[location.hash]); }
+  const v = VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'inicio';
+  Object.entries(VIEWS).forEach(([k, id]) => { $(id).hidden = k !== v; });
+  document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v));
+  if (v === 'inicio') inicio.show(); if (v === 'calc') calc.show(); if (v === 'estrategias') strat.show(); if (v === 'operaciones') ops.show(); if (v === 'mercado' && api.on() && !$('fresh').childElementCount) connect();
+  window.scrollTo(0, 0);
+}
 window.addEventListener('hashchange', route); route();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

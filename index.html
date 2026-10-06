@@ -8,15 +8,29 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<link rel="stylesheet" href="dashboard/styles.css?v=0.6">
+<link rel="stylesheet" href="dashboard/styles.css?v=0.7">
 </head>
 <body>
 <header class="top">
   <div class="brand"><span class="logo">◆</span> Profit God</div>
-  <span class="ver" id="ver">v0.6</span>
+  <span class="ver" id="ver">v0.7</span>
 </header>
-<nav class="tabs"><a href="#datos" class="on">Mis datos</a><a href="#hoy">Hoy</a><a href="#calc">Calculadora</a><a href="#estrategias">Estrategias</a><a href="#flipping">Flipping</a></nav>
-<main id="viewData">
+<nav class="tabs"><a href="#inicio" class="on"><i>🏠</i><span>Inicio</span></a><a href="#mercado"><i>📊</i><span>Mercado</span></a><a href="#calc"><i>🧮</i><span>Calculadora</span></a><a href="#estrategias"><i>📈</i><span>Estrategias</span></a><a href="#operaciones"><i>💰</i><span>Operaciones</span></a><a href="#config"><i>⚙️</i><span>Config.</span></a></nav>
+<main id="viewInicio"></main>
+<main id="viewMercado" hidden>
+  <section class="card"><h2>Estado de tus datos</h2><p class="hint">Aquí ves qué tan frescos están los precios que capturaste con el programa del PC, ciudad por ciudad, y lo último que pasaste por el mercado del juego. Conecta tu base en Configuración.</p></section>
+  <section class="card" id="cFresh">
+    <h2>Qué tan frescos están tus datos</h2>
+    <div id="fresh"></div>
+    <p class="hint" id="histNote"></p>
+  </section>
+  <section class="card" id="cRecent">
+    <h2>Lo último que capturaste</h2>
+    <div class="row"><label class="inline">Ciudad<select id="rcCity"></select></label><button id="btnRefresh">Actualizar</button></div>
+    <div id="recent" class="list"></div>
+  </section>
+</main>
+<main id="viewConfig" hidden>
   <section class="card" id="cConn">
     <h2>Tu base de datos</h2>
     <p class="hint">Dirección de tu Worker en Cloudflare y tu clave. Se guardan solo en este dispositivo.</p>
@@ -24,13 +38,6 @@
     <label>Clave<input id="key" type="password" autocomplete="off" placeholder="tu clave"></label>
     <div class="row"><button id="btnTest" class="primary">Conectar</button><span id="connMsg" class="msg"></span></div>
   </section>
-
-  <section class="card" id="cFresh" hidden>
-    <h2>Qué tan frescos están tus datos</h2>
-    <div id="fresh"></div>
-    <p class="hint" id="histNote"></p>
-  </section>
-
   <section class="card" id="cPub">
     <h2>Datos públicos (Albion Data Project)</h2>
     <p class="hint">La app puede usar tus datos y los públicos a la vez. Por cada precio usa el <b>más reciente</b> y te muestra de cuál viene: <b>propio</b> o <b>público</b>. Los datos públicos no traen cantidades.</p>
@@ -41,7 +48,6 @@
     <label>Proxy (opcional, solo si el navegador no puede leer los datos públicos)<input id="proxy" type="url" inputmode="url" autocomplete="off" placeholder="https://mi-proxy.….workers.dev"></label>
     <div class="row"><button id="btnPub">Probar datos públicos</button><span id="pubMsg" class="msg"></span></div>
   </section>
-
   <section class="card" id="cCfg">
     <h2>Mi configuración</h2>
     <div class="grid">
@@ -50,13 +56,12 @@
       <label>Ciudad actual<select id="city"></select></label>
       <label>Nivel de riesgo<select id="risk"></select></label>
       <label>Premium<select id="premium"><option value="0">NO</option><option value="1">SÍ</option></select></label>
-      <label>Focus<select id="focus"><option value="0">0 (sin Focus)</option></select></label>
+      <label>Focus disponible<input id="focus" type="text" inputmode="numeric" placeholder="0 = sin Focus"></label>
       <label>Tarifa de estación mín.<input id="feeMin" type="text" inputmode="numeric"></label>
       <label>Tarifa de estación máx.<input id="feeMax" type="text" inputmode="numeric"></label>
     </div>
-    <p class="hint">Sin Premium y sin Focus es tu escenario base. Premium o Focus solo se usarán como comparación, nunca para recomendarte operaciones. La tarifa de estación la ajustas al fabricar.</p>
+    <p class="hint">Sin Premium y sin Focus es lo normal. Si pones Focus disponible, las fabricaciones lo usan (costo base, sin maestría) hasta que se acabe; si no, se calculan sin Focus. La tarifa de estación por fabricación la pones en «Tiempos y avisos».</p>
   </section>
-
   <section class="card" id="cTimes">
     <h2>Tiempos y avisos (estimados)</h2>
     <p class="hint">El juego no publica cuánto tardas en cada cosa. Estos valores son una primera estimación: ajústalos con tu experiencia. Con ellos se calcula el silver por hora, que se muestra como «estimado».</p>
@@ -70,19 +75,12 @@
     </div>
     <p class="hint">Si dejas la tarifa de estación en 0, «Hoy» calcula las fabricaciones sin ella y lo avisa: pon la que ves en tu estación para que el profit sea real.</p>
   </section>
-
-  <section class="card" id="cRecent" hidden>
-    <h2>Lo último que capturaste</h2>
-    <div class="row"><label class="inline">Ciudad<select id="rcCity"></select></label><button id="btnRefresh">Actualizar</button></div>
-    <div id="recent" class="list"></div>
-  </section>
 </main>
-<main id="viewHoy" hidden></main>
 <main id="viewCalc" hidden></main>
 <main id="viewStrat" hidden></main>
-<main id="viewFlip" hidden></main>
+<main id="viewOps" hidden></main>
 
 <dialog id="dlg"><div id="dlgBody"></div><div class="row end"><button id="dlgClose">Cerrar</button></div></dialog>
-<script type="module" src="dashboard/app.js?v=0.6"></script>
+<script type="module" src="dashboard/app.js?v=0.7"></script>
 </body>
 </html>

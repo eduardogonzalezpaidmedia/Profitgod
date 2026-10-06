@@ -1,10 +1,10 @@
 // Busca qué fabricar o refinar donde estás y a dónde venderlo (INSTANT). Función pura: recibe filas ya leídas.
 // Nada se inventa: sin precio de algún material, o del producto, o con datos de más de 24 h, la receta se descarta y se cuenta.
-import { craftBatch } from '../profit-engine/profit.js';
-import { rateFor } from '../profit-engine/scenario.js';
-import { flipRisk } from '../black-market/risk.js';
-import { liquidityLevel } from '../flipping/flipping.js';
-import { scoreAll } from './score.js';
+import { craftBatch } from '../profit-engine/profit.js?v=0.7';
+import { rateFor } from '../profit-engine/scenario.js?v=0.7';
+import { flipRisk } from '../black-market/risk.js?v=0.7';
+import { liquidityLevel } from '../flipping/flipping.js?v=0.7';
+import { scoreAll } from './score.js?v=0.7';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 const MAX_AGE = 1440;
@@ -22,7 +22,8 @@ export function scanCrafts(p) {
     // ¿hay al menos un precio en la ciudad para alguno de sus materiales? si no, ni siquiera es candidata
     if (!recipe.materials.some(m => idx.has(p.city + '|' + m.item_id + '|1'))) continue;
     stats.candidates++;
-    const rr = rateFor(game, item, { craftCity: p.city, focus: false, manualRatePct: null });
+    const useFocus = p.focus > 0 && recipe.focus_base > 0;      // con Focus solo si lo tienes; se cuenta el costo base (sin maestría, por prudencia)
+    const rr = rateFor(game, item, { craftCity: p.city, focus: useFocus, manualRatePct: null });
     if (rr.rate === null) { stats.noRate++; continue; }
     const prices = {}, srcs = new Set(); let missing = false, old = false, mAge = 0, availCrafts = Infinity, availKnown = true;
     for (const m of recipe.materials) {
@@ -42,13 +43,15 @@ export function scanCrafts(p) {
       const oldest = Math.max(mAge, bAge), trip = sc !== p.city;
       const run = n => craftBatch({ recipe: { quantity_produced: recipe.quantity_produced, materials: recipe.materials, focus_base: recipe.focus_base }, units: n * recipe.quantity_produced, prices, returnRate: rr.rate,
         craftingFee: { value: (+cfg.craftFee || 0) * n, mode: 'total' }, transport: { legs: [], perUnit: 0 }, otherCosts: 0, sale: { unitPrice: b.price, mode: 'instant', taxPct, setupPct }, minutes: null });
-      const fixedMin = (cfg.actionMin || 5) * 2 + (trip ? (cfg.tripMin || 15) : 0);
+      const toStart = p.startCity && p.city !== p.startCity;                       // fabricar en otra ciudad: primero hay que ir
+      const fixedMin = (cfg.actionMin || 5) * 2 + (trip ? (cfg.tripMin || 15) : 0) + (toStart ? (cfg.tripMin || 15) : 0);
       /** Misma operación con un tope de silver y de minutos (para armar el plan). */
-      const make = (silverMax, minutesMax) => {
+      const make = (silverMax, minutesMax, focusMax) => {
         // con cantidades conocidas no se vende más de 2/3 de lo que piden (si no, el riesgo sube y los precios pueden caer)
         const cap = depthKnown ? Math.floor(demandUnits / 1.5 / recipe.quantity_produced) : Math.floor(demandUnits / recipe.quantity_produced);
         let n = Math.max(1, Math.min(p.maxCrafts || 200, cap || 1, isFinite(availCrafts) ? availCrafts : Infinity));
         if (isFinite(minutesMax)) n = Math.min(n, Math.floor((minutesMax - fixedMin) / (cfg.craftMin || 0.5)));
+        if (useFocus) n = Math.min(n, Math.floor((focusMax == null ? p.focus : focusMax) / recipe.focus_base));
         if (n < 1) return null;
         let r = run(n);
         if (!r || !isNum(r.totalCost)) return null;
@@ -57,13 +60,14 @@ export function scanCrafts(p) {
         const minutes = fixedMin + n * (cfg.craftMin || 0.5), roi = r.roi;
         const risk = flipRisk({ cost: r.totalCost, from: p.city, to: sc, units: r.made, demand: depthKnown ? demandUnits : null, depthKnown, roi, oldestMin: oldest, volatilityPct: null, historyPoints: 0 });
         return { kind: 'craft', item_id: pid, label: game.label(pid), city: p.city, from: p.city, to: sc, crafts: n, w: { units: r.made, cost: r.totalCost, profit: Math.round(r.profit), roi, gross: r.sale.gross, net: r.sale.net }, calc: r, minutes, sph: r.profit / (minutes / 60),
-          oldest, risk, liquidity: depthKnown ? liquidityLevel(demandUnits) : 'SIN DATO', depthKnown, demand: demandUnits, hv: { enough: false, points: 0 }, anomalies: [], steps: trip ? 3 : 2,
+          oldest, risk, liquidity: depthKnown ? liquidityLevel(demandUnits) : 'SIN DATO', depthKnown, demand: demandUnits, hv: { enough: false, points: 0 }, anomalies: [], steps: 2 + (trip ? 1 : 0) + (toStart ? 1 : 0),
+          withFocus: useFocus, focusUsed: useFocus ? n * recipe.focus_base : 0, isRefining: item.category === 'refined',
           srcs: [...srcs, b.src].filter(Boolean), retorno: rr.rate, unitPrice: b.price, feeTotal: (+cfg.craftFee || 0) * n, make };
       };
-      const o = make(p.silver > 0 ? p.silver : Infinity, Infinity); if (o) { opps.push(o); got = true; }
+      const o = make(p.silver > 0 ? p.silver : Infinity, Infinity, p.focus); if (o) { opps.push(o); got = true; }
     }
     if (got) stats.evaluated++; else if (anyOld) stats.tooOld++; else stats.noData++;
   }
-  scoreAll(opps, p.silver);
+  scoreAll(opps, p.silver, p.profile || {});
   return { opps, stats };
 }

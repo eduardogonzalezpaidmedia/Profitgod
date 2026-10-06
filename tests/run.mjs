@@ -4,8 +4,9 @@ import { tests as et } from './engine.test.mjs';
 import { tests as st } from './strategies.test.mjs';
 import { tests as sc } from './sources.test.mjs';
 import { tests as p5 } from './phase5.test.mjs';
+import { tests as p7 } from './phase7.test.mjs';
 let bad = 0, n = 0;
-for (const { name, fn } of [...wt, ...ft, ...et, ...st, ...sc, ...p5]) {
+for (const { name, fn } of [...wt, ...ft, ...et, ...st, ...sc, ...p5, ...p7]) {
   n++;
   try { await fn(); console.log('  ok  ' + name); } catch (e) { bad++; console.log(' FALLA ' + name + '\n        ' + e.message); }
 }

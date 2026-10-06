@@ -6,36 +6,23 @@ Motor de decisiones económicas para Albion Online. Aplicación aparte de [Silve
 
 ## Estado
 
-**Fase 6 · ¿Qué hago hoy? (v0.6).** Sobre Flipping, Mercado Negro y datos públicos (v0.4), refinado y estrategias (v0.3), la calculadora (v0.2) y los datos y frescura (v0.1). Diseño aprobado ([`docs/DISENO.md`](docs/DISENO.md)). Ya incluye:
+**v0.7 · Un solo motor de oportunidades.** Profit God ya no es un montón de calculadoras: configuras tu situación (silver, ciudad, tiempo, riesgo, Premium, Focus), pulsas **ENCONTRAR PROFIT** y recibes un ranking único que mezcla flipping, fabricación, refinado y Mercado Negro, con el porqué de cada recomendación. Diseño en [`docs/DISENO.md`](docs/DISENO.md).
 
-- Worker v2 con historial propio y rutas `/v2` ([`worker/worker.js`](worker/worker.js), guía en [`docs/WORKER.md`](docs/WORKER.md)).
-- App web (PWA) que se conecta a tu base, muestra la frescura de tus datos por ciudad, lo último que capturaste y el historial de cada objeto.
-- Configuración personal con los valores por defecto del diseño (sin Premium, sin Focus, tarifa de estación 300–900).
+- **Inicio:** tu situación, estado de los datos (🟢/🟡/🔴), el botón ENCONTRAR PROFIT, un plan para tu tiempo y el ranking con filtros (tipo, riesgo, ciudad, capital, profit, ROI, profit/h, liquidez, confianza).
+- **Profit Score 0–100** (con sus 9 componentes visibles, incluido el encaje con tu capital, tiempo y riesgo) y **Confianza 0–100 %** (frescura, cantidad de datos, historial, coincidencia entre tus datos y los públicos, liquidez, variabilidad, fuente, consistencia; los datos viejos o sin cantidades nunca dan confianza alta). Pesos en [`opportunity-engine/config.js`](opportunity-engine/config.js).
+- **Detalle de cada oportunidad:** cuentas completas (compra, materiales, impuestos, venta, profit, ROI, profit/h), datos usados (precio actual, histórico, antigüedad, demanda, fuentes), riesgos, avisos y una frase que explica por qué se recomienda.
+- **Mis operaciones:** registras lo que decides hacer y lo que realmente ganaste; resumen y descarga en CSV. Solo en tu dispositivo.
+- **Mercado:** frescura de tus datos por ciudad y lo último que capturaste. **Calculadora** y **Estrategias** (varios materiales a la vez) siguen igual. **Configuración:** conexión, datos públicos, tu situación y tiempos estimados.
+- Datos de tu base (Worker) y de Albion Data Project, con el origen de cada precio marcado. Si el Worker no responde, la app lo dice, muestra la última actualización y ofrece reintentar o usar datos públicos.
+- Reglas: nada se inventa, sin Premium ni Focus por defecto, tiempos y silver/hora siempre «estimados», solo analiza (no automatiza nada del juego).
 
-- **Calculadora** (pestaña «Calculadora»): elige cualquier objeto con receta y ve el desglose del profit (venta bruta → impuesto → neta, materiales tras retorno, tarifa de estación, transporte → costo total → profit neto, ROI, silver/hora), en **INSTANT** y en **ORDEN**.
-- Los precios vienen de tu base y puedes cambiarlos para **simular**; cada precio queda marcado «base», «simulado» o «sin dato».
-- Premium y Focus solo aparecen como **comparación**; tu escenario base es sin ambos.
-
-- **Refinar o comprar el refinado:** en la calculadora, al elegir un material refinado se compara «comprar recurso → refinar → vender» contra «comprar el refinado ya hecho → vender», en INSTANT y en ORDEN.
-- **Estrategias · «Tengo estos materiales»:** eliges un material y cuántos tienes; compara vender los materiales, refinar, fabricar y vender en la ciudad, o fabricar → Mercado Negro. Marca la mejor opción y muestra cuántas recetas se revisaron y cuántas se descartaron por falta de precio o por datos de más de 24 h. Nunca recomienda gastar más silver del que tienes.
-
-- **Flipping** (pestaña «Flipping»): busca objetos que se compran en una ciudad y se venden más caros en otra o en el Mercado Negro, después de impuestos, recorriendo las órdenes visibles. Cada oportunidad muestra frescura, liquidez, riesgo y de dónde vino cada precio.
-- **Datos tuyos + Albion Data Project:** la app usa tu base y los datos públicos; para cada precio (venta y compra por separado) toma el más reciente y lo marca «propio» o «público». Los datos públicos no traen cantidades: esas oportunidades quedan «cantidad no verificada». Se activan o desactivan en «Mis datos».
-
-- **Opportunity Score 0–100** (Fase 5): cada oportunidad tiene un puntaje con sus 8 componentes visibles (silver/hora, profit, ROI, liquidez, demanda, historial, estabilidad, facilidad) × frescura × riesgo. Lo que no se sabe vale 0 y se marca «sin dato». Pesos en [`opportunity-engine/config.js`](opportunity-engine/config.js).
-- **Avisos de anomalía:** precio de venta lejos de su mediana histórica (±20 %), tus datos y los públicos que no coinciden, o ganancias sospechosamente altas. Solo avisan, no bloquean.
-- **Filtros y orden** en Flipping: puntaje, riesgo, liquidez, antigüedad del dato, avisos; ordenar por puntaje, profit, ROI o silver/hora. Se aplican al instante.
-- **¿Qué hago hoy?** (pestaña «Hoy»): con tu silver, tu tiempo y el riesgo que aceptas arma un plan que mezcla comprar y llevar (desde tu ciudad) con fabricar/refinar donde estás. Nunca pasa de tu silver menos la reserva ni de tu tiempo, no vende más de 2/3 de lo que piden, y cada paso se explica.
-- **Tengo estos materiales, varios a la vez:** agrega varios materiales con su cantidad; fabricar usa todos los que sirven, y lo que sobra se valora a la orden de compra.
-- **Tiempos estimados:** minutos por viaje, por comprar/vender y por fabricación son editables en «Mis datos» (el juego no los publica): el silver/hora siempre se rotula «estimado». La tarifa de estación por fabricación también la pones tú.
-
-Pendiente (Fase 7): alertas y pulido final.
+**Pendiente:** alertas, mercado global, historial navegable, asistente.
 
 ## Usarla
 
 1. Actualiza tu Worker con [`docs/WORKER.md`](docs/WORKER.md).
 2. Abre la app, escribe la dirección de tu Worker y tu clave, y pulsa **Conectar**. Se guardan solo en ese dispositivo.
-3. Pruebas: `npm install && npm test` (87 pruebas: Worker, lógica de la app, motor de profit y estrategias).
+3. Pruebas: `npm install && npm test` (103 pruebas: Worker, lógica de la app, motor de profit y estrategias).
 
 Los datos del juego (`data/game/*.json`) se generan con `python3 scripts/build-data.py <carpeta data de Silver Master>`.
 

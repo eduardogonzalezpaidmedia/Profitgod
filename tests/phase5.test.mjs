@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { makeGameData } from '../crafting/recipes.js';
-import { opportunityScore } from '../opportunity-engine/score.js';
+import { opportunityScore, fitValue } from '../opportunity-engine/score.js';
 import { findAnomalies } from '../history/anomalies.js';
 import { scanCrafts } from '../opportunity-engine/craftscan.js';
 import { buildPlan } from '../opportunity-engine/plan.js';
@@ -13,15 +13,22 @@ const ok = (c, m) => { if (!c) throw new Error(m || 'falló'); };
 const raw = {}; for (const n of ['items', 'recipes', 'materials', 'cities', 'stations', 'settings']) raw[n] = JSON.parse(fs.readFileSync(new URL('../data/game/' + n + '.json', import.meta.url)));
 const game = makeGameData(raw);
 
-const base = { profit: 100000, roi: 25, sph: 300000, bestSph: 300000, liquidity: 'ALTA', demand: 60, units: 20, hv: { enough: true, vsAvgPct: 0, volatilityPct: 0 }, riskLevel: 'BAJO', oldestMin: 3, capital: 400000, silver: 500000, steps: 2 };
+const base = { profit: 100000, roi: 25, sph: 300000, bestSph: 300000, liquidity: 'ALTA', demand: 60, units: 20, hv: { enough: true, vsAvgPct: 0, volatilityPct: 0 }, riskLevel: 'BAJO', oldestMin: 3, capital: 400000, silver: 500000, steps: 2, minutes: 30, hours: 2, maxRisk: 'ALTO' };
 t('puntaje: datos de más de 24 h no se recomiendan', () => { eq(opportunityScore(Object.assign({}, base, { oldestMin: 1500 })).score, null); eq(opportunityScore(Object.assign({}, base, { oldestMin: null })).score, null); });
 t('puntaje: los pesos suman 100 y el resultado está entre 0 y 100', () => { const s = opportunityScore(base); ok(Math.abs(s.components.reduce((a, c) => a + c.weight, 0) - 1) < 1e-9); ok(s.score >= 0 && s.score <= 100); });
-t('puntaje: números a mano (profit 100.000, ROI 25 %, ALTA, demanda 60/20, sin variación, cabe en el silver)', () => {
+t('puntaje: números a mano (profit 100.000, ROI 25 %, ALTA, demanda 60/20, sin variación, 80 % del capital, 30 de 120 min)', () => {
   const s = opportunityScore(base), v = Object.fromEntries(s.components.map(c => [c.key, c.value]));
   eq([v.sph, v.roi, v.liquidity, v.demand, v.trend, v.volatility], [1, 0.5, 0.8, 1, 1, 1]);
-  ok(Math.abs(v.profit - Math.log10(100001) / 6) < 1e-9); eq(v.ease, 0.5 + 0.5 * 0.75);
-  const raw = 0.25 * 1 + 0.15 * v.profit + 0.10 * 0.5 + 0.15 * 0.8 + 0.10 * 1 + 0.10 * 1 + 0.05 * 1 + 0.10 * v.ease;
+  ok(Math.abs(v.profit - Math.log10(100001) / 6) < 1e-9); eq(v.ease, 0.75);
+  const capFit = 1 - 0.7 * (0.8 - 0.6) / 0.4, fit = 0.5 * capFit + 0.3 * 1 + 0.2 * 1;
+  ok(Math.abs(v.fit - fit) < 1e-9, 'encaje ' + v.fit + ' vs ' + fit);
+  const raw = 0.20 * 1 + 0.10 * v.profit + 0.10 * 0.5 + 0.15 * 0.8 + 0.10 * 1 + 0.10 * 1 + 0.05 * 1 + 0.05 * 0.75 + 0.15 * fit;
   eq(s.score, Math.round(raw * 100 * 1.0 * 1.0), 'frescura < 5 min × 1,00; riesgo bajo × 1,00');
+});
+t('encaje con el perfil: usar poco capital y poco tiempo rinde más; pasarse del tiempo da 0; riesgo mayor al aceptado penaliza', () => {
+  const f = o => fitValue(Object.assign({ capital: 100000, silver: 1000000, minutes: 30, hours: 2, riskLevel: 'BAJO', maxRisk: 'BAJO' }, o));
+  eq(f({}).value, 1); ok(f({ capital: 1000000 }).value < f({}).value); eq(f({ minutes: 200 }).time, 0); eq(f({ riskLevel: 'ALTO' }).risk, 0.3);
+  ok(opportunityScore(Object.assign({}, base, { capital: 100000 })).score > opportunityScore(Object.assign({}, base, { capital: 500000 })).score, 'misma ganancia con menos capital puntúa más');
 });
 t('puntaje: riesgo medio ×0,8, alto ×0,5 y la frescura baja el puntaje', () => {
   const a = opportunityScore(base).components.reduce((x, c) => x + c.points, 0), m = opportunityScore(Object.assign({}, base, { riskLevel: 'MEDIO' })), h = opportunityScore(Object.assign({}, base, { riskLevel: 'ALTO' }));

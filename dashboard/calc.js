@@ -1,10 +1,10 @@
 // Calculadora de fabricación: desglose del profit, INSTANT vs ORDEN, simulación y comparación con Premium / Focus.
-import { $, el, chip, field, select, input, num, numDec } from './dom.js';
-import { loadGameData, QUALITIES, CATEGORY_LABEL } from '../crafting/recipes.js';
-import { evaluate } from '../profit-engine/scenario.js';
-import { freshness, ageText } from '../data/freshness.js';
-import { fmt } from '../data/items.js';
-import { refineVsBuy } from '../refining/refining.js';
+import { $, el, chip, field, select, input, num, numDec } from './dom.js?v=0.7';
+import { loadGameData, QUALITIES, CATEGORY_LABEL } from '../crafting/recipes.js?v=0.7';
+import { evaluate } from '../profit-engine/scenario.js?v=0.7';
+import { freshness, ageText } from '../data/freshness.js?v=0.7';
+import { fmt } from '../data/items.js?v=0.7';
+import { refineVsBuy } from '../refining/refining.js?v=0.7';
 const pc = (n, d = 1) => n.toFixed(d).replace('.', ',') + '%';
 
 export function mountCalc(root, ctx) {
