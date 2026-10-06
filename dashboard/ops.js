@@ -1,7 +1,7 @@
 // Mis operaciones: lo que decidiste hacer y lo que realmente ganaste. Solo vive en este dispositivo.
-import { el, field, select, input, num } from './dom.js?v=0.12';
-import { fmt } from '../data/items.js?v=0.12';
-import { TYPE_LABEL } from '../opportunity-engine/opportunity.js?v=0.12';
+import { el, field, select, input, num } from './dom.js?v=0.13';
+import { fmt } from '../data/items.js?v=0.13';
+import { TYPE_LABEL } from '../opportunity-engine/opportunity.js?v=0.13';
 
 const ST = { en_curso: 'En curso', completada: 'Completada', cancelada: 'Cancelada' };
 const sgn = n => (n >= 0 ? '+' : '−') + fmt(Math.abs(n));

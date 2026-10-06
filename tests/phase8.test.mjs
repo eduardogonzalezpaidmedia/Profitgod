@@ -115,3 +115,6 @@ t('solo plata: veredicto = mejor por tipo y mejor general, sin ganancia o sin sc
   const v = verdict([op('flipping', 'comprar y llevar', 'A', 'x', 'y', 60, 100), op('refining', 'refinar', 'B', 'x', 'y', 80, 50), op('refining', 'refinar', 'C', 'x', 'y', 70, 500), op('crafting', 'fabricar', 'D', 'x', 'y', null, 900), op('crafting', 'fabricar', 'E', 'x', 'y', 99, -5)]);
   eq(v.top.item, 'B'); eq(v.best.refining.item, 'B'); eq(v.best.crafting, undefined); eq(v.best.flipping.item, 'A'); eq(verdict([]).top, null);
 });
+
+import { kindName } from '../tools/enchantcost.js';
+t('nombres de materiales de encanto como en el juego', () => { eq(kindName(KINDS[0], 6), 'Runa del maestro'); eq(kindName(KINDS[1], 8), 'Alma del anciano'); eq(kindName(KINDS[2], 7), 'Reliquia del gran maestro'); eq(kindName(KINDS[3], 5), 'Fragmento avaloniano'); });

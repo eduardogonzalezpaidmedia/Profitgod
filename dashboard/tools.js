@@ -1,14 +1,14 @@
 // Herramientas: planificador de varios ítems (con Cocina y Alquimia), flips de encanto, historial del oro y tablas de referencia.
-import { el, chip, field, select, input, num } from './dom.js?v=0.12';
-import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.12';
-import { planCrafts, plannerIds } from '../tools/planner.js?v=0.12';
-import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.12';
-import { goldStats } from '../tools/gold.js?v=0.12';
-import { KINDS, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.12';
-import { priceCard, searchAny } from '../tools/pricecard.js?v=0.12';
-import { referenceTables } from '../tools/reference.js?v=0.12';
-import { freshness, ageText } from '../data/freshness.js?v=0.12';
-import { fmt } from '../data/items.js?v=0.12';
+import { el, chip, field, select, input, num } from './dom.js?v=0.13';
+import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.13';
+import { planCrafts, plannerIds } from '../tools/planner.js?v=0.13';
+import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.13';
+import { goldStats } from '../tools/gold.js?v=0.13';
+import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.13';
+import { priceCard, searchAny } from '../tools/pricecard.js?v=0.13';
+import { referenceTables } from '../tools/reference.js?v=0.13';
+import { freshness, ageText } from '../data/freshness.js?v=0.13';
+import { fmt } from '../data/items.js?v=0.13';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
@@ -203,7 +203,7 @@ export function mountTools(root, ctx) {
   const mTier = () => +(ui.mTier ? ui.mTier.value : (MS.tier || E.tier));
   function drawMatsTable() {
     const tier = mTier(); ui.mTable.replaceChildren(); const t = el('table'), hr = el('tr'); ['Material', 'ID', 'Precio', 'Origen'].forEach(x => hr.appendChild(el('th', '', x))); t.appendChild(hr);
-    KINDS.forEach(k => { const slot = slotKey(k, tier), tr = el('tr'); tr.appendChild(el('td', '', k.short + (k.perTier ? ' T' + tier : '')));
+    KINDS.forEach(k => { const slot = slotKey(k, tier), tr = el('tr'); tr.appendChild(el('td', '', kindName(k, tier) + ' (.' + k.level + (k.perTier ? ' · T' + tier : '') + ')'));
       const idI = input(MS.ids[slot] || defaultId(k, tier), () => { MS.ids[slot] = idI.value.trim(); saveMS(); }, { autocomplete: 'off' }); idI.style.minWidth = '150px'; const a = el('td'); a.appendChild(idI); tr.appendChild(a);
       const prI = input(MS.prices[slot] ? fmt(MS.prices[slot]) : '', () => { MS.prices[slot] = num(prI.value); MS.src[slot] = { by: 'manual' }; saveMS(); org.textContent = 'manual'; drawMatsCost(); }, { inputMode: 'numeric', placeholder: 'silver' }); prI.style.width = '110px'; const b = el('td'); b.appendChild(prI); tr.appendChild(b);
       const org = el('td', 'sub', srcText(MS.src[slot])); tr.appendChild(org); t.appendChild(tr); });
@@ -222,9 +222,9 @@ export function mountTools(root, ctx) {
     ui.mRead.disabled = true; ui.mMsg.className = 'msg'; ui.mMsg.textContent = 'Leyendo…';
     try {
       const r = await ctx.getSrc().prices([...new Set(ids)], cities, [1]), errs = [r.ownError && 'Tu base: ' + r.ownError, r.pubError && 'Datos públicos: ' + r.pubError].filter(Boolean); let got = 0, miss = [];
-      KINDS.forEach((k, i) => { const slot = slotKey(k, tier), b = cheapest(r.rows.filter(x => x.item_id === ids[i])); if (b) { MS.prices[slot] = b.price; MS.src[slot] = { by: 'base', src: b.src, city: b.city, age: b.age }; got++; } else miss.push(k.short); });
+      KINDS.forEach((k, i) => { const slot = slotKey(k, tier), b = cheapest(r.rows.filter(x => x.item_id === ids[i])); if (b) { MS.prices[slot] = b.price; MS.src[slot] = { by: 'base', src: b.src, city: b.city, age: b.age }; got++; } else miss.push(kindName(k, tier)); });
       saveMS(); drawMatsTable(); drawMatsCost();
-      ui.mMsg.className = errs.length || miss.length ? 'msg err' : 'msg ok'; ui.mMsg.textContent = got + ' de ' + KINDS.length + ' leídos' + (miss.length ? '. Sin dato: ' + miss.join(', ') + ' (revisa el ID o escribe el precio)' : '') + (errs.length ? ' · ' + errs.join(' · ') : '');
+      ui.mMsg.className = errs.length || miss.length ? 'msg err' : 'msg ok'; ui.mMsg.textContent = got + ' de ' + KINDS.length + ' leídos' + (miss.length ? '. Sin dato: ' + miss.join(', ') + ' (revisa el ID o escribe el precio; si abriste ese objeto en el mercado del juego, su ID real aparece en Mercado → «Lo último que capturaste»)' : '') + (errs.length ? ' · ' + errs.join(' · ') : '');
     } catch (e) { ui.mMsg.className = 'msg err'; ui.mMsg.textContent = errText(e); }
     ui.mRead.disabled = false;
   }

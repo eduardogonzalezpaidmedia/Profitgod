@@ -7,6 +7,9 @@ export const KINDS = [
   { level: 3, key: 'relic', label: 'Reliquia', short: 'Reliquia (.3)', perTier: true },
   { level: 4, key: 'shard', label: 'Fragmento avaloniano', short: 'Fragmento (.4)', perTier: false }
 ];
+/** Nombres en el juego por tier (confirmados con capturas del mercado: iniciado T4, experto T5, maestro T6, gran maestro T7, anciano T8). */
+export const TIER_NAME = { 4: 'iniciado', 5: 'experto', 6: 'maestro', 7: 'gran maestro', 8: 'anciano' };
+export const kindName = (kind, tier) => kind.perTier ? kind.label + ' del ' + TIER_NAME[tier] : kind.label;
 /** IDs de partida (convención del juego; no vienen de los datos del repo). Editables: si no devuelven precio, corrígelos. */
 export const defaultId = (kind, tier) => kind.perTier ? 'T' + tier + '_' + kind.key.toUpperCase() : 'T4_SHARD_AVALONIAN';
 export const slotKey = (kind, tier) => kind.perTier ? kind.key + tier : kind.key;

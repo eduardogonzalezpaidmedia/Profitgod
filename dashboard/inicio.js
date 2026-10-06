@@ -1,13 +1,13 @@
 // Inicio: tu situación → ENCONTRAR PROFIT → ranking de oportunidades → detalle explicado. Una sola pantalla para lo principal.
-import { $, el, chip, field, select, input, num } from './dom.js?v=0.12';
-import { loadGameData, CATEGORY_LABEL } from '../crafting/recipes.js?v=0.12';
-import { findProfit } from '../opportunity-engine/engine.js?v=0.12';
-import { TYPE_LABEL } from '../opportunity-engine/opportunity.js?v=0.12';
-import { freshness } from '../data/freshness.js?v=0.12';
-import { fmt } from '../data/items.js?v=0.12';
-import { CITIES } from '../markets/cities.js?v=0.12';
-import { HOURS } from '../settings/defaults.js?v=0.12';
-import { kv } from './explain.js?v=0.12';
+import { $, el, chip, field, select, input, num } from './dom.js?v=0.13';
+import { loadGameData, CATEGORY_LABEL } from '../crafting/recipes.js?v=0.13';
+import { findProfit } from '../opportunity-engine/engine.js?v=0.13';
+import { TYPE_LABEL } from '../opportunity-engine/opportunity.js?v=0.13';
+import { freshness } from '../data/freshness.js?v=0.13';
+import { fmt } from '../data/items.js?v=0.13';
+import { CITIES } from '../markets/cities.js?v=0.13';
+import { HOURS } from '../settings/defaults.js?v=0.13';
+import { kv } from './explain.js?v=0.13';
 
 const hlabel = h => h < 1 ? h * 60 + ' minutos' : h + (h === 1 ? ' hora' : ' horas');
 const pc = (n, d = 1) => n === null || n === undefined ? '—' : n.toFixed(d).replace('.', ',') + '%';
