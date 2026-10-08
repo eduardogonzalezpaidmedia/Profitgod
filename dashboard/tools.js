@@ -1,15 +1,15 @@
 // Herramientas: planificador de varios ítems (con Cocina y Alquimia), flips de encanto, historial del oro y tablas de referencia.
-import { el, chip, field, select, input, num } from './dom.js?v=0.15';
-import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.15';
-import { planCrafts, plannerIds } from '../tools/planner.js?v=0.15';
-import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.15';
-import { goldStats } from '../tools/gold.js?v=0.15';
-import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.15';
-import { priceCard, searchAny } from '../tools/pricecard.js?v=0.15';
-import { potionRank, potionIds } from '../tools/potions.js?v=0.15';
-import { referenceTables } from '../tools/reference.js?v=0.15';
-import { freshness, ageText } from '../data/freshness.js?v=0.15';
-import { fmt } from '../data/items.js?v=0.15';
+import { el, chip, field, select, input, num } from './dom.js?v=0.16';
+import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.16';
+import { planCrafts, plannerIds } from '../tools/planner.js?v=0.16';
+import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.16';
+import { goldStats } from '../tools/gold.js?v=0.16';
+import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.16';
+import { priceCard, searchAny } from '../tools/pricecard.js?v=0.16';
+import { potionRank, potionIds } from '../tools/potions.js?v=0.16';
+import { referenceTables } from '../tools/reference.js?v=0.16';
+import { freshness, ageText } from '../data/freshness.js?v=0.16';
+import { fmt } from '../data/items.js?v=0.16';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
@@ -244,7 +244,7 @@ export function mountTools(root, ctx) {
     ui.pT1 = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), PT.tmin, () => { PT.tmin = +ui.pT1.value; }); ui.pT2 = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), PT.tmax, () => { PT.tmax = +ui.pT2.value; });
     ui.pBuy = select(cities.filter(x => x !== 'Black Market').map(x => [x, x]), P.buyCity, () => { P.buyCity = ui.pBuy.value; }); ui.pCraft = select(game.craftCities().map(x => [x, x]), P.craftCity, () => { P.craftCity = ui.pCraft.value; });
     ui.pDays = select([[3, 'últimos 3 días'], [7, 'últimos 7 días'], [14, 'últimos 14 días']], PT.days, () => { PT.days = +ui.pDays.value; });
-    if (isGear) { ui.pCat = select(GEAR_CATS, PT.cat, () => { PT.cat = ui.pCat.value; PT.sub = ''; drawSub(); }); ui.pSub = select([['', 'Todos']].concat(subsOf(PT.cat).map(k => [k, game.stations[k] || ({ accessoires_capes_capes: 'Capas comunes', accessoires_capes_avalon: 'Capas avalonianas', accessoires_capes_brecilien: 'Capas de Brecilien', other: 'Otras' }[k]) || k.replace(/_/g, ' ')])), PT.sub, () => { PT.sub = ui.pSub.value; }); g.append(field('Tipo de equipo', ui.pCat), field('Subtipo', ui.pSub)); }
+    if (isGear) { ui.pCat = select(GEAR_CATS, PT.cat, () => { PT.cat = ui.pCat.value; PT.sub = ''; drawSub(); }); ui.pSub = select([['', 'Todos']].concat(subsOf(PT.cat).map(k => [k, game.stations[k] || ({ accessoires_capes_capes: 'Capas comunes', accessoires_capes_avalon: 'Capas avalonianas', other: 'Otras' }[k]) || (/^accessoires_capes_/.test(k) ? 'Capas de ' + ({ fortsterling: 'Fort Sterling' }[k.slice(18)] || k.slice(18).replace(/^./, c => c.toUpperCase())) : k.replace(/_/g, ' '))])), PT.sub, () => { PT.sub = ui.pSub.value; }); g.append(field('Tipo de equipo', ui.pCat), field('Subtipo', ui.pSub)); }
     g.append(field('Tier desde', ui.pT1), field('Tier hasta', ui.pT2), field('Compro materiales en', ui.pBuy), field('Fabrico en', ui.pCraft), field('Volumen de', ui.pDays),
       field('Premium', select([['0', 'NO'], ['1', 'SÍ']], P.premium ? '1' : '0', e => { P.premium = e.target.value === '1'; })), field('Tarifa de estación por fabricación', input(P.fee, e => { P.fee = e.target.value; }, { inputMode: 'numeric', placeholder: '0' })));
     ui.pGo = el('button', 'primary', isGear ? 'Comparar equipo' : 'Comparar pociones'); ui.pGo.addEventListener('click', () => runRank(kind)); ui.pMsg = el('span', 'msg'); const row = el('div', 'row'); row.append(ui.pGo, ui.pMsg);

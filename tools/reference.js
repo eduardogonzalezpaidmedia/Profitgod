@@ -1,5 +1,5 @@
 // Tablas de referencia armadas SOLO con datos verificados del repo (data/game/settings.json y cities.json, con fuente y fecha).
-import { fromBonus } from '../refining/returnRate.js?v=0.15';
+import { fromBonus } from '../refining/returnRate.js?v=0.16';
 
 export function referenceTables(game) {
   const s = game.settings, pb = s.return_rate.production_bonus, t = s.taxes;

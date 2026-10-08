@@ -21,7 +21,7 @@ const base = (extra = {}) => Object.assign({
 t('datos del juego: receta de la poción y búsqueda', () => {
   const r = game.recipe('T2_POTION_HEAL'); eq([r.quantity_produced, r.materials[0].item_id, r.materials[0].quantity], [5, 'T2_AGARIC', 8]);
   ok(game.search('t2 pocion curacion').some(x => x.item_id === 'T2_POTION_HEAL'), 'búsqueda por texto');
-  eq(game.recipes.size, 7363);
+  eq(game.recipes.size, 7663);
 });
 const ok = (c, m) => { if (!c) throw new Error(m || 'falló'); };
 

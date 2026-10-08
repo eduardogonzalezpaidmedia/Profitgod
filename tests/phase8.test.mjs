@@ -143,3 +143,11 @@ t('historial público: URL /stats/history con escala diaria y error claro', asyn
   const r = await pub.history(['T4_POTION_HEAL'], ['Caerleon', 'Black Market'], [1]); ok(u.includes('/api/v2/stats/history/T4_POTION_HEAL?locations=Caerleon,Black%20Market&time-scale=24&qualities=1'), u); eq(r.length, 1);
   let m = ''; try { await makePublic({ usePublic: true }, { fetch: async () => { throw new Error('Failed to fetch'); } }).history(['X'], ['Caerleon']); } catch (e) { m = e.message; } ok(m.includes('CORS'));
 });
+
+t('capas de ciudad y facción: Fort Sterling existe con receta (capa base + insignia + ficha) y ya no faltan las 6 ciudades', () => {
+  const r = game.recipe('T4_CAPEITEM_FW_FORTSTERLING'); ok(r); eq(r.materials.map(m => m.item_id), ['T4_CAPE', 'T4_CAPEITEM_FW_FORTSTERLING_BP', 'T1_FACTION_MOUNTAIN_TOKEN_1']); eq(r.materials.map(m => m.returnable), [false, false, false]);
+  eq(game.recipe('T6_CAPEITEM_FW_FORTSTERLING@2').materials[0].item_id, 'T6_CAPE@2'); eq(game.name('T4_CAPEITEM_FW_FORTSTERLING'), 'Capa de Fort Sterling del iniciado');
+  for (const c of ['LYMHURST', 'MARTLOCK', 'THETFORD', 'BRIDGEWATCH', 'CAERLEON', 'BRECILIEN']) ok(game.item('T5_CAPEITEM_FW_' + c), c);
+  eq(game.name('T1_FACTION_MOUNTAIN_TOKEN_1'), 'Corazón de montaña');
+  const subs = new Set(game.items.filter(i => i.category === 'capes').map(i => i.subcategory)); ok(subs.has('accessoires_capes_fortsterling') && subs.has('accessoires_capes_lymhurst'));
+});
