@@ -1,8 +1,8 @@
 // Escenarios de una fabricación: INSTANT (compro y vendo al instante) y ORDEN (publico órdenes).
 // Función pura: recibe los precios ya leídos y devuelve el desglose completo. No usa red ni DOM.
-import { craftBatch } from './profit.js?v=0.14';
-import { compute as computeRR } from '../refining/returnRate.js?v=0.14';
-import { sourceSummary } from '../data/merge.js?v=0.14';
+import { craftBatch } from './profit.js?v=0.15';
+import { compute as computeRR } from '../refining/returnRate.js?v=0.15';
+import { sourceSummary } from '../data/merge.js?v=0.15';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 const pos = v => isNum(v) && v > 0 ? v : null;

@@ -1,19 +1,19 @@
 // Herramientas: planificador de varios ítems (con Cocina y Alquimia), flips de encanto, historial del oro y tablas de referencia.
-import { el, chip, field, select, input, num } from './dom.js?v=0.14';
-import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.14';
-import { planCrafts, plannerIds } from '../tools/planner.js?v=0.14';
-import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.14';
-import { goldStats } from '../tools/gold.js?v=0.14';
-import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.14';
-import { priceCard, searchAny } from '../tools/pricecard.js?v=0.14';
-import { potionRank, potionIds } from '../tools/potions.js?v=0.14';
-import { referenceTables } from '../tools/reference.js?v=0.14';
-import { freshness, ageText } from '../data/freshness.js?v=0.14';
-import { fmt } from '../data/items.js?v=0.14';
+import { el, chip, field, select, input, num } from './dom.js?v=0.15';
+import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.15';
+import { planCrafts, plannerIds } from '../tools/planner.js?v=0.15';
+import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.15';
+import { goldStats } from '../tools/gold.js?v=0.15';
+import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.15';
+import { priceCard, searchAny } from '../tools/pricecard.js?v=0.15';
+import { potionRank, potionIds } from '../tools/potions.js?v=0.15';
+import { referenceTables } from '../tools/reference.js?v=0.15';
+import { freshness, ageText } from '../data/freshness.js?v=0.15';
+import { fmt } from '../data/items.js?v=0.15';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
-const SUBS = [['precio', '🔎 Precio'], ['plan', '🧮 Planificador'], ['ench', '✨ Encantar'], ['mats', '💎 Runas y almas'], ['pot', '🧪 Pociones'], ['oro', '🪙 Oro'], ['ref', '📚 Referencia']];
+const SUBS = [['precio', '🔎 Precio'], ['plan', '🧮 Planificador'], ['ench', '✨ Encantar'], ['mats', '💎 Runas y almas'], ['pot', '🧪 Pociones'], ['gear', '🛡 Equipo'], ['oro', '🪙 Oro'], ['ref', '📚 Referencia']];
 const PRESETS = [['', 'Todo'], ['food', '🍲 Cocina'], ['potion', '⚗️ Alquimia'], ['ore', 'Refinado (mineral)'], ['wood', 'Refinado (madera)'], ['fiber', 'Refinado (fibra)'], ['hide', 'Refinado (piel)'], ['rock', 'Refinado (piedra)']];
 
 export function mountTools(root, ctx) {
@@ -35,7 +35,7 @@ export function mountTools(root, ctx) {
   }
   function drawSub() {
     ui.bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === sub)); ui.body.replaceChildren();
-    ({ precio: drawPrice, plan: drawPlan, ench: drawEnch, mats: drawMats, pot: drawPot, oro: drawGold, ref: drawRef })[sub]();
+    ({ precio: drawPrice, plan: drawPlan, ench: drawEnch, mats: drawMats, pot: drawPot, gear: drawGear, oro: drawGold, ref: drawRef })[sub]();
   }
   const noSrc = () => !ctx.getSrc().usable();
   const errText = e => e && e.message && e.message.includes('Failed to fetch') ? 'No se pudo conectar con tu base.' : (e && e.message) || String(e);
@@ -231,47 +231,54 @@ export function mountTools(root, ctx) {
   }
 
   // ---------- Pociones ----------
-  const PT = { tmin: 4, tmax: 8, sort: 'market', days: 7, group: '' }, GROUPS = [['', 'Todas'], ['ALTO VOLUMEN Y ALTO PRECIO', 'Alto volumen y alto precio'], ['ALTO VOLUMEN, PRECIO BAJO', 'Alto volumen, precio bajo'], ['PRECIO ALTO, SE MUEVE POCO', 'Precio alto, se mueve poco'], ['BAJO VOLUMEN Y BAJO PRECIO', 'Bajo volumen y bajo precio']];
-  let potLast = null;
-  function drawPot() {
-    const c = el('section', 'card'); c.appendChild(el('h2', '', 'Pociones: volumen y precio'));
-    c.appendChild(el('p', 'hint', 'Compara las pociones entre sí: cuántas se venden por día, a qué precio, cuánto cuesta fabricarlas y cuánto queda por unidad. El volumen sale del historial público de Albion Data Project (unidades por día que reportan los jugadores); no es el total real del servidor. Sirve para comparar unas pociones con otras.'));
+  const PTS = { pot: { tmin: 4, tmax: 8, sort: 'market', days: 7, group: '' }, gear: { tmin: 4, tmax: 8, sort: 'market', days: 7, group: '', cat: 'weapons', sub: '' } }, GEAR_CATS = [['weapons', 'Armas'], ['armor', 'Armaduras'], ['head', 'Cascos'], ['shoes', 'Botas'], ['capes', 'Capas']], MAX_IDS = 300, GROUPS = [['', 'Todas'], ['ALTO VOLUMEN Y ALTO PRECIO', 'Alto volumen y alto precio'], ['ALTO VOLUMEN, PRECIO BAJO', 'Alto volumen, precio bajo'], ['PRECIO ALTO, SE MUEVE POCO', 'Precio alto, se mueve poco'], ['BAJO VOLUMEN Y BAJO PRECIO', 'Bajo volumen y bajo precio']];
+  const potLast = { pot: null, gear: null };
+  const drawPot = () => drawRank('pot'), drawGear = () => drawRank('gear');
+  const subsOf = cat => [...new Set(game.items.filter(i => i.category === cat && i.enchantment === 0 && game.recipes.has(i.item_id)).map(i => i.subcategory))].filter(Boolean).sort();
+  const rankIds = kind => { const PT = PTS[kind]; if (kind === 'pot') return { ids: potionIds(game, PT.tmin, PT.tmax), cut: 0 }; const all = game.items.filter(i => i.category === PT.cat && (!PT.sub || i.subcategory === PT.sub) && i.enchantment === 0 && i.tier >= PT.tmin && i.tier <= PT.tmax && game.recipes.has(i.item_id)).map(i => i.item_id); return { ids: all.slice(0, MAX_IDS), cut: Math.max(0, all.length - MAX_IDS) }; };
+  function drawRank(kind) {
+    const PT = PTS[kind], isGear = kind === 'gear';
+    const c = el('section', 'card'); c.appendChild(el('h2', '', isGear ? 'Equipo: volumen y precio' : 'Pociones: volumen y precio'));
+    c.appendChild(el('p', 'hint', 'Compara ' + (isGear ? 'las piezas de equipo' : 'las pociones') + ' entre sí: cuántas se venden por día, a qué precio, cuánto cuesta fabricarlas y cuánto queda por unidad. El volumen sale del historial público de Albion Data Project (unidades por día que reportan los jugadores); no es el total real del servidor. Sirve para comparar unas pociones con otras.'));
     const cities = game.marketCities(), g = el('div', 'grid');
     ui.pT1 = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), PT.tmin, () => { PT.tmin = +ui.pT1.value; }); ui.pT2 = select([4, 5, 6, 7, 8].map(x => [x, 'T' + x]), PT.tmax, () => { PT.tmax = +ui.pT2.value; });
     ui.pBuy = select(cities.filter(x => x !== 'Black Market').map(x => [x, x]), P.buyCity, () => { P.buyCity = ui.pBuy.value; }); ui.pCraft = select(game.craftCities().map(x => [x, x]), P.craftCity, () => { P.craftCity = ui.pCraft.value; });
     ui.pDays = select([[3, 'últimos 3 días'], [7, 'últimos 7 días'], [14, 'últimos 14 días']], PT.days, () => { PT.days = +ui.pDays.value; });
+    if (isGear) { ui.pCat = select(GEAR_CATS, PT.cat, () => { PT.cat = ui.pCat.value; PT.sub = ''; drawSub(); }); ui.pSub = select([['', 'Todos']].concat(subsOf(PT.cat).map(k => [k, game.stations[k] || ({ accessoires_capes_capes: 'Capas comunes', accessoires_capes_avalon: 'Capas avalonianas', accessoires_capes_brecilien: 'Capas de Brecilien', other: 'Otras' }[k]) || k.replace(/_/g, ' ')])), PT.sub, () => { PT.sub = ui.pSub.value; }); g.append(field('Tipo de equipo', ui.pCat), field('Subtipo', ui.pSub)); }
     g.append(field('Tier desde', ui.pT1), field('Tier hasta', ui.pT2), field('Compro materiales en', ui.pBuy), field('Fabrico en', ui.pCraft), field('Volumen de', ui.pDays),
       field('Premium', select([['0', 'NO'], ['1', 'SÍ']], P.premium ? '1' : '0', e => { P.premium = e.target.value === '1'; })), field('Tarifa de estación por fabricación', input(P.fee, e => { P.fee = e.target.value; }, { inputMode: 'numeric', placeholder: '0' })));
-    ui.pGo = el('button', 'primary', 'Comparar pociones'); ui.pGo.addEventListener('click', runPot); ui.pMsg = el('span', 'msg'); const row = el('div', 'row'); row.append(ui.pGo, ui.pMsg);
-    c.append(g, row); ui.pOut = el('section', 'card'); ui.pOut.hidden = true; ui.body.append(c, ui.pOut); if (potLast) drawPotOut();
+    ui.pGo = el('button', 'primary', isGear ? 'Comparar equipo' : 'Comparar pociones'); ui.pGo.addEventListener('click', () => runRank(kind)); ui.pMsg = el('span', 'msg'); const row = el('div', 'row'); row.append(ui.pGo, ui.pMsg);
+    c.append(g, row); ui.pOut = el('section', 'card'); ui.pOut.hidden = true; ui.body.append(c, ui.pOut); if (potLast[kind]) drawRankOut(kind);
   }
-  async function runPot() {
+  async function runRank(kind) {
+    const PT = PTS[kind], isGear = kind === 'gear';
     if (noSrc()) { ui.pMsg.className = 'msg err'; ui.pMsg.textContent = 'Conecta tu base o activa los datos públicos en Configuración.'; return; }
     if (PT.tmax < PT.tmin) { ui.pMsg.className = 'msg err'; ui.pMsg.textContent = 'El tier final debe ser igual o mayor al inicial.'; return; }
-    const src = ctx.getSrc(), ids = potionIds(game, PT.tmin, PT.tmax), sale = game.marketCities(), allIds = [...new Set(ids.flatMap(i => [i, ...game.recipe(i).materials.map(m => m.item_id)]))];
-    ui.pGo.disabled = true; ui.pMsg.className = 'msg'; ui.pMsg.textContent = 'Leyendo precios de ' + fmt(ids.length) + ' pociones…';
+    const src = ctx.getSrc(), { ids, cut } = rankIds(kind), sale = game.marketCities(), allIds = [...new Set(ids.flatMap(i => [i, ...game.recipe(i).materials.map(m => m.item_id)]))];
+    ui.pGo.disabled = true; ui.pMsg.className = 'msg'; ui.pMsg.textContent = 'Leyendo precios de ' + fmt(ids.length) + (isGear ? ' piezas' : ' pociones') + (cut ? ' (se recortó: había ' + fmt(ids.length + cut) + '; elige un subtipo o menos tiers)' : '') + '…';
     try {
       const { map, errs } = await readMarket(allIds, [...new Set([P.buyCity, ...sale])]); let hist = new Map(), hErr = null;
       ui.pMsg.textContent = 'Leyendo historial de ventas…';
       try { (await src.pub.history(ids, sale, [1])).forEach(h => hist.set(h.location + '|' + h.item_id, h.data || [])); } catch (e) { hErr = errText(e); }
       const r = potionRank({ game, ids, craftCity: P.craftCity, buyCity: P.buyCity, saleCities: sale, premium: P.premium, focus: false, feePerCraft: num(P.fee), days: PT.days, market: (c, id) => map.get(c + '|' + id) || null, hist: (c, id) => hist.get(c + '|' + id) || null });
-      potLast = { r, hErr }; const all = [...errs, hErr && 'Historial: ' + hErr].filter(Boolean); ui.pMsg.className = all.length ? 'msg err' : 'msg'; ui.pMsg.textContent = all.join(' · '); drawPotOut();
+      potLast[kind] = { r, hErr, cut }; const all = [...errs, hErr && 'Historial: ' + hErr].filter(Boolean); ui.pMsg.className = all.length ? 'msg err' : 'msg'; ui.pMsg.textContent = all.join(' · '); drawRankOut(kind);
     } catch (e) { ui.pMsg.className = 'msg err'; ui.pMsg.textContent = errText(e); }
     ui.pGo.disabled = false;
   }
-  function drawPotOut() {
-    const { r, hErr } = potLast, o = ui.pOut; o.hidden = false; o.replaceChildren(el('h2', '', 'Resultado'));
-    if (!r.out.length) { o.appendChild(el('div', 'warn', 'Datos insuficientes: no hay pociones con precio de venta y de materiales de menos de 24 horas. Pasa por el mercado con el programa del PC abierto o activa los datos públicos.')); }
+  function drawRankOut(kind) {
+    const PT = PTS[kind], isGear = kind === 'gear', { r, hErr, cut } = potLast[kind], o = ui.pOut; o.hidden = false; o.replaceChildren(el('h2', '', 'Resultado'));
+    if (!r.out.length) { o.appendChild(el('div', 'warn', 'Datos insuficientes: no hay ' + (isGear ? 'piezas' : 'pociones') + ' con precio de venta y de materiales de menos de 24 horas. Pasa por el mercado con el programa del PC abierto o activa los datos públicos.')); }
+    if (cut) o.appendChild(el('div', 'warn', 'Había ' + fmt(PTS[kind].tmax && (r.stats.total + cut)) + ' piezas y se revisaron ' + fmt(r.stats.total) + ' para no saturar la API. Elige un subtipo o menos tiers para ver el resto.'));
     if (hErr) o.appendChild(el('div', 'warn', 'No se pudo leer el historial público, así que no hay volumen. Se muestran precio y costo. (' + hErr + ')'));
     const sorts = { market: ['Mercado diario (volumen × precio)', x => x.market || 0], vol: ['Volumen por día', x => x.perDay || 0], price: ['Precio', x => x.price], profit: ['Ganancia por unidad', x => x.profitUnit], dayp: ['Ganancia diaria posible', x => x.dayProfit || 0] };
-    const bar = el('div', 'row'); bar.append(field('Ordenar por', select(Object.entries(sorts).map(([k, v]) => [k, v[0]]), PT.sort, e => { PT.sort = e.target.value; drawPotOut(); })), field('Grupo', select(GROUPS, PT.group, e => { PT.group = e.target.value; drawPotOut(); }))); o.appendChild(bar);
+    const bar = el('div', 'row'); bar.append(field('Ordenar por', select(Object.entries(sorts).map(([k, v]) => [k, v[0]]), PT.sort, e => { PT.sort = e.target.value; drawRankOut(kind); })), field('Grupo', select(GROUPS, PT.group, e => { PT.group = e.target.value; drawRankOut(kind); }))); o.appendChild(bar);
     const list = r.out.filter(x => !PT.group || x.group === PT.group).sort((a, b) => sorts[PT.sort][1](b) - sorts[PT.sort][1](a));
-    const t = el('table'), hr = el('tr'); ['Poción', 'Precio', 'Vol./día', 'Costo', 'Ganancia/u.', 'Grupo'].forEach(x => hr.appendChild(el('th', '', x))); t.appendChild(hr);
+    const t = el('table'), hr = el('tr'); [isGear ? 'Pieza' : 'Poción', 'Precio', 'Vol./día', 'Costo', 'Ganancia/u.', 'Grupo'].forEach(x => hr.appendChild(el('th', '', x))); t.appendChild(hr);
     list.forEach(x => { const tr = el('tr'), a = el('td'); a.appendChild(document.createTextNode(x.label)); a.appendChild(el('div', 'sub', 'vender en ' + x.saleCity + (x.histDays ? ' · volumen de ' + x.histDays + ' días' : '') + (x.canSell != null ? ' · podrías vender ~' + fmt(x.canSell) + '/día' : '')));
       tr.appendChild(a); tr.appendChild(el('td', '', fmt(x.price))); tr.appendChild(el('td', '', x.perDay == null ? 'sin dato' : fmt(x.perDay))); tr.appendChild(el('td', '', fmt(x.cost))); tr.appendChild(el('td', x.profitUnit < 0 ? 'neg' : 'pos', fmt(x.profitUnit)));
       const g = el('td'); g.appendChild(el('span', 'tag ' + (x.group.startsWith('ALTO VOLUMEN Y') ? 'own' : ''), x.group.toLowerCase())); tr.appendChild(g); t.appendChild(tr); });
     const w = el('div', 'tablewrap'); w.appendChild(t); o.appendChild(w);
-    const s = r.stats; o.appendChild(el('p', 'hint', fmt(r.out.length) + ' de ' + fmt(s.total) + ' pociones con datos completos (' + fmt(s.noPrice) + ' sin precio de venta, ' + fmt(s.noMats) + ' sin precio de algún material, ' + fmt(s.tooOld) + ' con datos de más de 24 h, ' + fmt(s.noVolume) + ' sin historial de volumen). Mediana de volumen: ' + (r.medianVol == null ? '—' : fmt(r.medianVol) + '/día') + ' · mediana de precio: ' + (r.medianPrice == null ? '—' : fmt(r.medianPrice)) + '. «Alto» significa igual o sobre la mediana de este listado. Venta instantánea a la mejor orden de compra, impuesto ' + r.taxPct + ' %, sin transporte ni tiempo; «podrías vender» respeta no pasar de 2/3 del volumen.'));
+    const s = r.stats; o.appendChild(el('p', 'hint', fmt(r.out.length) + ' de ' + fmt(s.total) + (isGear ? ' piezas' : ' pociones') + ' con datos completos (' + fmt(s.noPrice) + ' sin precio de venta, ' + fmt(s.noMats) + ' sin precio de algún material, ' + fmt(s.tooOld) + ' con datos de más de 24 h, ' + fmt(s.noVolume) + ' sin historial de volumen). Mediana de volumen: ' + (r.medianVol == null ? '—' : fmt(r.medianVol) + '/día') + ' · mediana de precio: ' + (r.medianPrice == null ? '—' : fmt(r.medianPrice)) + '. «Alto» significa igual o sobre la mediana de este listado. Venta instantánea a la mejor orden de compra, impuesto ' + r.taxPct + ' %, sin transporte ni tiempo; «podrías vender» respeta no pasar de 2/3 del volumen.'));
   }
 
   // ---------- Oro ----------
