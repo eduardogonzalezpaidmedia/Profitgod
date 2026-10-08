@@ -1,5 +1,5 @@
 // Datos públicos de Albion Data Project (AODP). Respeta los límites de la API: consultas agrupadas, caché y espera ante 429.
-import { fromPublic } from './merge.js?v=0.13';
+import { fromPublic } from './merge.js?v=0.14';
 
 const HOSTS = { americas: 'https://west.albion-online-data.com', europe: 'https://europe.albion-online-data.com', asia: 'https://east.albion-online-data.com' };
 export const SERVERS = [['americas', 'Américas'], ['europe', 'Europa'], ['asia', 'Asia']];
@@ -57,10 +57,21 @@ export function makePublic(cfg, deps = {}) {
     try { return await one(base + '/api/v2/stats/gold?count=' + (count || 240)); }
     catch (e) { throw new Error(e && e.message === 'Failed to fetch' ? 'El navegador no pudo leer los datos públicos (red o CORS).' : (e && e.message) || String(e)); }
   }
+  /** Historial diario de ventas (AODP /stats/history, escala 24 h). → [{location,item_id,quality,data:[{item_count,avg_price,timestamp}]}] */
+  async function history(ids, cities, qs) {
+    if (!on()) throw new Error('Los datos públicos están desactivados en Configuración.');
+    const q = qs && qs.length ? qs : [1], out = [], uniq = [...new Set(ids)];
+    const u = list => base + '/api/v2/stats/history/' + list.join(',') + '?locations=' + cities.map(encodeURIComponent).join(',') + '&time-scale=24&qualities=' + q.join(',');
+    const parts = []; let cur = [];
+    for (const id of uniq) { if (cur.length && u(cur.concat(id)).length > MAX_URL) { parts.push(cur); cur = []; } cur.push(id); } if (cur.length) parts.push(cur);
+    try { for (const part of parts) out.push(...await one(u(part))); }
+    catch (e) { throw new Error(e && e.message === 'Failed to fetch' ? 'El navegador no pudo leer el historial público (red o CORS).' : (e && e.message) || String(e)); }
+    return out;
+  }
   async function test() {
     stats.lastError = null;
     try { const raw = await one(url(['T4_BAG'], ['Caerleon'], [1])); return { ok: true, rows: raw.length }; }
     catch (e) { return { ok: false, error: e && e.message === 'Failed to fetch' ? 'El navegador no pudo leer los datos públicos (red o CORS). Prueba configurar un proxy.' : (e && e.message) || String(e) }; }
   }
-  return { on, prices, gold, test, stats, host: base, chunk, _url: url };
+  return { on, prices, gold, history, test, stats, host: base, chunk, _url: url };
 }

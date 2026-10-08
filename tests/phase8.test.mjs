@@ -118,3 +118,28 @@ t('solo plata: veredicto = mejor por tipo y mejor general, sin ganancia o sin sc
 
 import { kindName } from '../tools/enchantcost.js';
 t('nombres de materiales de encanto como en el juego', () => { eq(kindName(KINDS[0], 6), 'Runa del maestro'); eq(kindName(KINDS[1], 8), 'Alma del anciano'); eq(kindName(KINDS[2], 7), 'Reliquia del gran maestro'); eq(kindName(KINDS[3], 5), 'Fragmento avaloniano'); });
+
+import { potionRank, potionIds, volumeStats } from '../tools/potions.js';
+t('volumen: promedio de unidades por día y precio medio ponderado, sin datos = null', () => {
+  const v = volumeStats([{ item_count: 100, avg_price: 10 }, { item_count: 300, avg_price: 20 }, { item_count: 200, avg_price: 30 }], 2); eq([v.perDay, v.days], [250, 2]); ok(Math.abs(v.avgPrice - (300 * 20 + 200 * 30) / 500) < 1e-9); eq(volumeStats([]), null); eq(volumeStats(null), null);
+});
+t('pociones: costo, ganancia por unidad, grupos por mediana y filtros de datos faltantes/viejos', () => {
+  const ids = potionIds(game, 4, 5); ok(ids.length >= 4); const [a, b, c, d] = ids, mats = id => game.recipe(id).materials.map(m => m.item_id);
+  const mk = {}; ids.slice(0, 4).forEach((id, i) => { mats(id).forEach(m => { mk['Lymhurst|' + m] = { sell_min: 10, sellAge: 5 }; }); mk['Caerleon|' + id] = { buy_max: [1000, 1200, 50000, 60000][i], buyAge: 5 }; });
+  mk['Caerleon|' + d].buyAge = 3000;   // viejo → fuera
+  const vols = [500, 10, 500, 10], hist = (city, id) => { const i = ids.indexOf(id); return i >= 0 && i < 4 ? [{ item_count: vols[i], avg_price: 1 }] : null; };
+  const r = potionRank({ game, ids: [a, b, c, d], craftCity: 'Lymhurst', buyCity: 'Lymhurst', saleCities: ['Caerleon'], premium: false, feePerCraft: 0, market: (ci, id) => mk[ci + '|' + id] || null, hist });
+  eq(r.out.length, 3); eq(r.stats.tooOld, 1); const A = r.out.find(x => x.id === a), C = r.out.find(x => x.id === c);
+  ok(A.profitUnit < A.price && A.cost > 0); eq(A.canSell, Math.floor(500 / 1.5)); eq(C.group, 'ALTO VOLUMEN Y ALTO PRECIO'); eq(r.out.find(x => x.id === b).group, 'PRECIO BAJO'.length ? r.out.find(x => x.id === b).group : '');
+  eq(r.medianVol, 500);
+});
+t('pociones: sin historial queda «sin volumen» y no se inventa', () => {
+  const ids = potionIds(game, 4, 4), a = ids[0], mk = {}; game.recipe(a).materials.forEach(m => { mk['Lymhurst|' + m.item_id] = { sell_min: 10, sellAge: 5 }; }); mk['Caerleon|' + a] = { buy_max: 900, buyAge: 5 };
+  const r = potionRank({ game, ids: [a], craftCity: 'Lymhurst', buyCity: 'Lymhurst', saleCities: ['Caerleon'], premium: true, market: (c, id) => mk[c + '|' + id] || null, hist: () => null });
+  eq(r.out[0].perDay, null); eq(r.out[0].group, 'SIN VOLUMEN'); eq(r.stats.noVolume, 1); eq(r.taxPct, 4);
+});
+t('historial público: URL /stats/history con escala diaria y error claro', async () => {
+  let u = null; const pub = makePublic({ usePublic: true }, { fetch: async x => { u = x; return { ok: true, status: 200, json: async () => [{ location: 'Caerleon', item_id: 'X', data: [] }] }; } });
+  const r = await pub.history(['T4_POTION_HEAL'], ['Caerleon', 'Black Market'], [1]); ok(u.includes('/api/v2/stats/history/T4_POTION_HEAL?locations=Caerleon,Black%20Market&time-scale=24&qualities=1'), u); eq(r.length, 1);
+  let m = ''; try { await makePublic({ usePublic: true }, { fetch: async () => { throw new Error('Failed to fetch'); } }).history(['X'], ['Caerleon']); } catch (e) { m = e.message; } ok(m.includes('CORS'));
+});
