@@ -75,3 +75,6 @@ Más → «🛡 Equipo»: el mismo análisis de volumen, precio, costo y gananci
 
 ## v0.16
 Capas de ciudad y de facción (Fort Sterling, Lymhurst, Martlock, Thetford, Bridgewatch, Caerleon, smuggler, heretic, undead, keeper, morgana, demon) agregadas a los datos del juego con `scripts/add-faction-capes.py` (origen: ao-data/ao-bin-dumps). +300 objetos y recetas.
+
+## v0.17
+Más → «🧱 Materiales»: tabla de precios de materiales (recursos y refinados, tiers 1–8, encantamientos .0–.4) con el diseño de la tabla de Fabricación de Silver Master. Puedes escribir cada precio a mano (dorado) o pulsar «Cargar» para copiar los precios de tu base propia y de Albion Data Project (blanco, editable; solo datos de menos de 24 h; ciudad elegida o la más barata). Los precios quedan solo en este dispositivo (`localStorage`, `profitgod.matprices`) y reemplazan el precio de compra del material en toda la app, marcados como «manual». Solo analiza datos; no toca el cliente del juego. Código: `data/overrides.js`, `tools/materials.js`, `dashboard/materiales.js`.

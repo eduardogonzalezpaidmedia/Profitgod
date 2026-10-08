@@ -104,3 +104,33 @@ section.card h3{margin:16px 0 6px;font-size:15px}
 
 .tag.cross{background:#10243a;color:#7cc4ff;border-color:#1d4a73}
 .crossbox{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:10px 0;padding:10px 12px;border:1px solid #1d4a73;background:#0e1c2c;border-radius:12px;font-size:14px}
+
+/* precios de materiales (mismo diseño que la tabla de Fabricación de Silver Master) */
+.matwrap{display:grid;grid-template-columns:230px 1fr;gap:16px;align-items:start}
+.matnav{position:sticky;top:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:2px;max-height:80vh;overflow:auto}
+.matnav .navh{font-size:11px;letter-spacing:.14em;color:var(--mute);font-weight:700;padding:12px 10px 6px}
+.matnav .navi{text-align:left;background:none;border:1px solid transparent;color:var(--fg,#e6edf3);padding:10px;border-radius:10px;font-size:14px}
+.matnav .navi.on{background:#2a2410;border-color:#6b5a1f;color:var(--acc);font-weight:600}
+.mattable{min-width:0}
+.matbar{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:8px 0}
+.mt-grid{min-width:560px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.mt-row{display:grid;grid-template-columns:minmax(120px,1.3fr) repeat(5,minmax(70px,1fr));align-items:center;border-bottom:1px solid var(--line)}
+.mt-head{font-size:11px;letter-spacing:.12em;color:var(--mute);font-weight:700;padding:10px 0}
+.mt-head .c:first-child{display:none}
+.mt-head{grid-template-columns:minmax(120px,1.3fr) repeat(5,minmax(70px,1fr))}
+.mt-block{display:grid;grid-template-columns:150px 1fr}
+.mt-obj{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;border-right:1px solid var(--line)}
+.mt-obj img{background:#2c3342;border:1px solid #4a5468;border-radius:12px;padding:4px}
+.mt-name{color:var(--acc);font-weight:700;text-align:center}
+.mt-grid .c{padding:8px 10px}.mt-grid .c.r{text-align:right}
+.mt-grid .tier{color:var(--mute);font-size:14px}.mt-grid .tier .sub{font-size:11px;opacity:.8}
+.mt-head{display:grid;grid-template-columns:150px minmax(120px,1.3fr) repeat(5,minmax(70px,1fr))}
+.mt-block .mt-row{grid-template-columns:minmax(120px,1.3fr) repeat(5,minmax(70px,1fr))}
+.mt-grid input{width:100%;background:transparent;border:1px solid transparent;border-radius:8px;color:#fff;text-align:right;padding:6px 6px;font-size:15px}
+.mt-grid input:focus{border-color:var(--acc);background:#0d1117;outline:0}
+.mt-grid input.man{color:var(--acc);font-weight:600}
+.mt-grid input.onl{color:#fff}
+.mt-grid .dash{color:var(--mute)}
+.toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,12px);background:#161b22;border:1px solid var(--line);color:#e6edf3;padding:12px 18px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:.25s;z-index:30;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (max-width:760px){.matwrap{grid-template-columns:1fr}.matnav{position:static;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;max-height:none}.matnav .navh{display:none}.matnav .navi{white-space:nowrap}.mt-block,.mt-head{grid-template-columns:96px 1fr}.mt-head{grid-template-columns:96px minmax(100px,1.3fr) repeat(5,70px)}.mt-block{grid-template-columns:96px 1fr}.mt-grid{min-width:640px}.mt-obj{padding:8px}.mt-obj img{width:48px;height:48px}}

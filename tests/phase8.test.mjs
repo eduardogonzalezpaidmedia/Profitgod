@@ -151,3 +151,29 @@ t('capas de ciudad y facción: Fort Sterling existe con receta (capa base + insi
   eq(game.name('T1_FACTION_MOUNTAIN_TOKEN_1'), 'Corazón de montaña');
   const subs = new Set(game.items.filter(i => i.category === 'capes').map(i => i.subcategory)); ok(subs.has('accessoires_capes_fortsterling') && subs.has('accessoires_capes_lymhurst'));
 });
+
+import { makeOverrides } from '../data/overrides.js';
+import { groupTable, idFor, pickPrice, allMaterialIds } from '../tools/materials.js';
+const memStore = () => { const m = {}; return { getItem: k => m[k] ?? null, setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; } }; };
+t('precios de materiales: guardar, redondear, borrar con 0 y sobrevivir a recargar', () => {
+  const st = memStore(), o = makeOverrides(st); o.set('T4_METALBAR', 712.4, { by: 'manual' }); eq(o.get('T4_METALBAR').price, 712); eq(o.count(), 1);
+  eq(makeOverrides(st).get('T4_METALBAR').price, 712); o.set('T4_METALBAR', 0); eq(o.get('T4_METALBAR'), null); eq(o.count(), 0);
+  st.setItem('profitgod.matprices', '{{malo'); eq(makeOverrides(st).count(), 0);
+});
+t('materiales: ids con encantamiento, tabla por grupo y filas que no existen', () => {
+  eq(idFor('METALBAR', 4, 0), 'T4_METALBAR'); eq(idFor('METALBAR', 4, 2), 'T4_METALBAR_LEVEL2@2');
+  const g = groupTable(game, 'METALBAR'); ok(g.rows.length >= 5 && g.ids.includes('T4_METALBAR')); ok(g.rows.every(r => r.cells.length === 5));
+  ok(allMaterialIds(game).length > g.ids.length);
+});
+t('materiales: copia el más barato fresco o el de la ciudad pedida', () => {
+  const rw = (c, p, a) => ({ city: c, sell: { price: p, age_min: a, src: 'propio' } });
+  const rows = [rw('Lymhurst', 700, 5), rw('Caerleon', 500, 3000), rw('Martlock', 650, 10)];
+  eq(pickPrice(rows, '').price, 650); eq(pickPrice(rows, 'Lymhurst').price, 700); eq(pickPrice(rows, 'Caerleon'), null);
+});
+t('precios manuales: valen en prices() y market(), con raw se ignoran, y crean fila si faltaba', async () => {
+  const ov = makeOverrides(memStore()); ov.set('T4_METALBAR', 400, { by: 'manual' });
+  const pub = { on: () => true, prices: async () => [{ item_id: 'T4_METALBAR', city: 'Lymhurst', quality: 1, sell_min: 900, sell_age: 5, buy_max: 0, buy_age: null }], stats: {} };
+  const s = makeSources({ usePublic: true }, { own: { on: () => false }, pub, overrides: ov });
+  const r = await s.prices(['T4_METALBAR'], ['Lymhurst', 'Caerleon'], [1]); eq(r.rows.length, 2); ok(r.rows.every(x => x.sell.price === 400 && x.sell.src === 'manual'));
+  s.clear(); const raw2 = await s.prices(['T4_METALBAR'], ['Lymhurst'], [1], { raw: true }); eq(raw2.rows[0].sell.price, 900);
+});

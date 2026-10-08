@@ -1,10 +1,10 @@
 // «Solo tengo plata»: sin elegir ningún objeto, busca qué conviene más con tu silver: refinar, fabricar, comprar en una ciudad y vender en otra, o Mercado Negro.
-import { el, chip, field, select, input, num } from './dom.js?v=0.16';
-import { findProfit } from '../opportunity-engine/engine.js?v=0.16';
-import { TYPE_LABEL } from '../opportunity-engine/opportunity.js?v=0.16';
-import { freshness } from '../data/freshness.js?v=0.16';
-import { fmt } from '../data/items.js?v=0.16';
-import { HOURS, RISKS } from '../settings/defaults.js?v=0.16';
+import { el, chip, field, select, input, num } from './dom.js?v=0.17';
+import { findProfit } from '../opportunity-engine/engine.js?v=0.17';
+import { TYPE_LABEL } from '../opportunity-engine/opportunity.js?v=0.17';
+import { freshness } from '../data/freshness.js?v=0.17';
+import { fmt } from '../data/items.js?v=0.17';
+import { HOURS, RISKS } from '../settings/defaults.js?v=0.17';
 
 const ICON = { flipping: '🔁', crafting: '🛠', refining: '⚗️', blackmarket: '🕶' };
 const NAME = { flipping: 'Comprar en una ciudad y vender en otra', crafting: 'Fabricar', refining: 'Refinar', blackmarket: 'Llevar al Mercado Negro' };

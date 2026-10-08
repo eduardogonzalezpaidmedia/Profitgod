@@ -1,5 +1,5 @@
 // Datos públicos de Albion Data Project (AODP). Respeta los límites de la API: consultas agrupadas, caché y espera ante 429.
-import { fromPublic } from './merge.js?v=0.16';
+import { fromPublic } from './merge.js?v=0.17';
 
 const HOSTS = { americas: 'https://west.albion-online-data.com', europe: 'https://europe.albion-online-data.com', asia: 'https://east.albion-online-data.com' };
 export const SERVERS = [['americas', 'Américas'], ['europe', 'Europa'], ['asia', 'Asia']];

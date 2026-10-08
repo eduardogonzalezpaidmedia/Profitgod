@@ -1,5 +1,5 @@
 // Anomalías: avisos para no caer en precios raros. Nunca bloquean; explican por qué desconfiar.
-import { ANOMALY } from '../opportunity-engine/config.js?v=0.16';
+import { ANOMALY } from '../opportunity-engine/config.js?v=0.17';
 const isNum = v => typeof v === 'number' && isFinite(v);
 const pc = n => Math.abs(n).toFixed(0) + '%';
 
