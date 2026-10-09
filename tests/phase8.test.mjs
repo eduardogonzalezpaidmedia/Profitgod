@@ -177,3 +177,23 @@ t('precios manuales: valen en prices() y market(), con raw se ignoran, y crean f
   const r = await s.prices(['T4_METALBAR'], ['Lymhurst', 'Caerleon'], [1]); eq(r.rows.length, 2); ok(r.rows.every(x => x.sell.price === 400 && x.sell.src === 'manual'));
   s.clear(); const raw2 = await s.prices(['T4_METALBAR'], ['Lymhurst'], [1], { raw: true }); eq(raw2.rows[0].sell.price, 900);
 });
+
+import { craftCost, costBlocks, findEntry, blockMaterialIds } from '../tools/costs.js';
+import { familyLabel, extraIds } from '../tools/materials.js';
+t('costo de fabricar: cantidad × precio, devolución solo en lo que devuelve, falta de precio = null (no 0)', () => {
+  const p = id => id.includes('METALBAR') ? 100 : id.includes('LEATHER') ? 50 : null;
+  const c = craftCost(game, 'T5_MAIN_SWORD@2', p, 15); eq(c.cost, 1700); eq(c.missing, []);
+  eq(craftCost(game, 'T5_MAIN_SWORD@2', p, 0).cost, 2000);
+  const m = craftCost(game, 'T5_MAIN_SWORD@2', id => id.includes('METALBAR') ? 100 : null, 0); eq(m.cost, null); eq(m.missing.length, 1);
+  ok(craftCost(game, 'T4_NO_EXISTE', p).noRecipe);
+});
+t('costos: familias por menú (espadas, capas) y materiales de la lista', () => {
+  const sw = costBlocks(game, findEntry('weapons|sword')); ok(sw.length >= 5 && sw.every(b => b.rows.every(r => r.cells.length === 5)));
+  eq(sw[0].label.includes(' del '), false); const cp = costBlocks(game, findEntry('capes|*')); ok(cp.some(b => b.label === 'Capa de Fort Sterling'));
+  ok(blockMaterialIds(game, sw).includes('T4_METALBAR'));
+  eq(familyLabel(['Espada del adepto', 'Espada del experto']), 'Espada'); eq(familyLabel(['Hoja de Clarent']), 'Hoja de Clarent');
+});
+t('materiales extra: artefactos y equipo base aparte, sin repetirse entre grupos', () => {
+  const x = extraIds(game); ok(x.ARTEFACTOS.length > 100 && x.EQUIPOBASE.length > 0); const all = Object.values(x).flat(); eq(all.length, new Set(all).size);
+  ok(!all.some(id => /^T\d_(METALBAR|ORE)$/.test(id)));
+});

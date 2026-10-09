@@ -1,6 +1,6 @@
 // Riesgo de una operación de flipping (y en especial hacia el Mercado Negro). Fórmula visible: suma de puntos con motivos.
 // No se asume que la venta al Mercado Negro esté garantizada. La distancia exacta entre ciudades no se modela.
-import { RISK } from '../flipping/config.js?v=0.17';
+import { RISK } from '../flipping/config.js?v=0.18';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 const pick = (table, v) => { const t = table.find(x => v >= x.min); return t ? t.pts : 0; };

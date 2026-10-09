@@ -1,6 +1,6 @@
 // Confianza (0–100 %) de una oportunidad: qué tan sólido es el dato. Distinto del puntaje: algo muy rentable puede ser poco confiable.
 // Componentes visibles y topes: datos viejos, sin cantidades o con avisos de anomalía nunca dan confianza alta.
-import { CONF_WEIGHTS, CONF_CAPS, CONF_LEVELS, LIQ_VALUE } from './config.js?v=0.17';
+import { CONF_WEIGHTS, CONF_CAPS, CONF_LEVELS, LIQ_VALUE } from './config.js?v=0.18';
 const isNum = v => typeof v === 'number' && isFinite(v);
 const clamp = v => Math.max(0, Math.min(1, v));
 

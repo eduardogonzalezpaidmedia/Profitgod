@@ -1,8 +1,8 @@
 // Busca oportunidades de flipping leyendo tus datos y los públicos. Sin DOM: lo usan «Flipping» y «¿Qué hago hoy?».
-import { scan, walk, orderEstimate, liquidityLevel } from './flipping.js?v=0.17';
-import { flipRisk, historyView } from '../black-market/risk.js?v=0.17';
-import { scoreAll } from '../opportunity-engine/score.js?v=0.17';
-import { findAnomalies } from '../history/anomalies.js?v=0.17';
+import { scan, walk, orderEstimate, liquidityLevel } from './flipping.js?v=0.18';
+import { flipRisk, historyView } from '../black-market/risk.js?v=0.18';
+import { scoreAll } from '../opportunity-engine/score.js?v=0.18';
+import { findAnomalies } from '../history/anomalies.js?v=0.18';
 
 const flat = r => ({ item_id: r.item_id, city: r.city, quality: r.quality, sell_min: r.sell.price, sell_age: r.sell.age, sell_amount: r.sell.amount, sell_src: r.sell.src, buy_max: r.buy.price, buy_age: r.buy.age, buy_amount: r.buy.amount, buy_src: r.buy.src });
 export const flipMinutes = (cfg, from, start) => (cfg.tripMin || 15) + (cfg.actionMin || 5) + (start && from && from !== start ? (cfg.tripMin || 15) : 0);   // si compras en otra ciudad, primero hay que ir

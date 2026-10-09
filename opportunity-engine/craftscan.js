@@ -1,10 +1,10 @@
 // Busca qué fabricar o refinar donde estás y a dónde venderlo (INSTANT). Función pura: recibe filas ya leídas.
 // Nada se inventa: sin precio de algún material, o del producto, o con datos de más de 24 h, la receta se descarta y se cuenta.
-import { craftBatch } from '../profit-engine/profit.js?v=0.17';
-import { rateFor } from '../profit-engine/scenario.js?v=0.17';
-import { flipRisk } from '../black-market/risk.js?v=0.17';
-import { liquidityLevel } from '../flipping/flipping.js?v=0.17';
-import { scoreAll } from './score.js?v=0.17';
+import { craftBatch } from '../profit-engine/profit.js?v=0.18';
+import { rateFor } from '../profit-engine/scenario.js?v=0.18';
+import { flipRisk } from '../black-market/risk.js?v=0.18';
+import { liquidityLevel } from '../flipping/flipping.js?v=0.18';
+import { scoreAll } from './score.js?v=0.18';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 const MAX_AGE = 1440;

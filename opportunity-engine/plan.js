@@ -1,6 +1,6 @@
 // «¿Qué hago hoy?»: arma un plan con las mejores oportunidades sin pasarse del silver (menos la reserva) ni del tiempo.
 // Función pura. Cada oportunidad trae make(silverRestante, minutosRestantes) que la recalcula más pequeña si hace falta.
-import { opportunityScore } from './score.js?v=0.17';
+import { opportunityScore } from './score.js?v=0.18';
 const isNum = v => typeof v === 'number' && isFinite(v);
 const RISK_ORDER = { BAJO: 0, MEDIO: 1, ALTO: 2 };
 
