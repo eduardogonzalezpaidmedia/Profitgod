@@ -202,5 +202,5 @@ import { scan as scanFlips } from '../flipping/flipping.js';
 t('flip directo: compra a la orden de venta más barata, vende a la orden de compra más alta, con impuesto, y nunca en la misma ciudad', () => {
   const r = (city, sm, bm) => ({ item_id: 'T4_X', city, quality: 1, sell_min: sm, sell_age: 5, sell_amount: 50, buy_max: bm, buy_age: 5, buy_amount: 20 });
   const out = scanFlips([r('Lymhurst', 700, 600), r('Caerleon', 1500, 1300), r('Martlock', 800, 0)], { buyCities: ['Lymhurst', 'Caerleon', 'Martlock'], sellCities: ['Lymhurst', 'Caerleon', 'Martlock'], taxPct: 8 });
-  eq(out.length, 1); eq([out[0].from, out[0].to, out[0].buyUnit, out[0].sellUnit], ['Lymhurst', 'Caerleon', 700, 1300]); eq(Math.round(out[0].unitProfit), 496);
+  eq(out.length, 2); eq(out.every(x => x.from !== x.to), true); eq([out[0].from, out[0].to, out[0].buyUnit, out[0].sellUnit], ['Lymhurst', 'Caerleon', 700, 1300]); eq(Math.round(out[0].unitProfit), 496);
 });
