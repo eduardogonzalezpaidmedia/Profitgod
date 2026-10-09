@@ -1,9 +1,9 @@
 // Una sola puerta de entrada a los precios: tus datos + los públicos, mezclados y con su origen.
-import { makeApi } from './api.js?v=0.18';
-import { makePublic } from './public.js?v=0.18';
-import { fromOwn, mergeSources } from './merge.js?v=0.18';
-import { freshness } from './freshness.js?v=0.18';
-import { makeOverrides, applyToV2, applyToMerged } from './overrides.js?v=0.18';
+import { makeApi } from './api.js?v=0.19';
+import { makePublic } from './public.js?v=0.19';
+import { fromOwn, mergeSources } from './merge.js?v=0.19';
+import { freshness } from './freshness.js?v=0.19';
+import { makeOverrides, applyToV2, applyToMerged } from './overrides.js?v=0.19';
 
 /** fila mezclada → forma /v2/prices (lados con price, age_min, freshness, orders, amount, src) */
 function toV2(r) {

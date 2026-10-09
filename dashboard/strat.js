@@ -1,10 +1,10 @@
 // «Tengo estos materiales»: vender, refinar o fabricar con ellos. Usa tu base; nada se inventa.
-import { el, chip, field, select, input, num } from './dom.js?v=0.18';
-import { loadGameData } from '../crafting/recipes.js?v=0.18';
-import { compareStrategies, neededIds } from '../profit-engine/strategies.js?v=0.18';
-import { freshness, ageText } from '../data/freshness.js?v=0.18';
-import { fmt } from '../data/items.js?v=0.18';
-import { mountSolo } from './solo.js?v=0.18';
+import { el, chip, field, select, input, num } from './dom.js?v=0.19';
+import { loadGameData } from '../crafting/recipes.js?v=0.19';
+import { compareStrategies, neededIds } from '../profit-engine/strategies.js?v=0.19';
+import { freshness, ageText } from '../data/freshness.js?v=0.19';
+import { fmt } from '../data/items.js?v=0.19';
+import { mountSolo } from './solo.js?v=0.19';
 
 export function mountStrat(root, ctx) {
   let game = null, built = false, last = null;

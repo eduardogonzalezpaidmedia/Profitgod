@@ -1,17 +1,17 @@
 // Herramientas: planificador de varios ítems (con Cocina y Alquimia), flips de encanto, historial del oro y tablas de referencia.
-import { el, chip, field, select, input, num } from './dom.js?v=0.18';
-import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.18';
-import { planCrafts, plannerIds } from '../tools/planner.js?v=0.18';
-import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.18';
-import { goldStats } from '../tools/gold.js?v=0.18';
-import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.18';
-import { priceCard, searchAny } from '../tools/pricecard.js?v=0.18';
-import { mountMateriales } from './materiales.js?v=0.18';
-import { mountCostos } from './costos.js?v=0.18';
-import { potionRank, potionIds } from '../tools/potions.js?v=0.18';
-import { referenceTables } from '../tools/reference.js?v=0.18';
-import { freshness, ageText } from '../data/freshness.js?v=0.18';
-import { fmt } from '../data/items.js?v=0.18';
+import { el, chip, field, select, input, num } from './dom.js?v=0.19';
+import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.19';
+import { planCrafts, plannerIds } from '../tools/planner.js?v=0.19';
+import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.19';
+import { goldStats } from '../tools/gold.js?v=0.19';
+import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.19';
+import { priceCard, searchAny } from '../tools/pricecard.js?v=0.19';
+import { mountMateriales } from './materiales.js?v=0.19';
+import { mountCostos } from './costos.js?v=0.19';
+import { potionRank, potionIds } from '../tools/potions.js?v=0.19';
+import { referenceTables } from '../tools/reference.js?v=0.19';
+import { freshness, ageText } from '../data/freshness.js?v=0.19';
+import { fmt } from '../data/items.js?v=0.19';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };

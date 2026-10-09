@@ -1,5 +1,5 @@
 // Ayudas pequeñas para armar la pantalla sin innerHTML (todo se inserta como texto).
-import { FRESHNESS_COLORS } from '../data/freshness.js?v=0.18';
+import { FRESHNESS_COLORS } from '../data/freshness.js?v=0.19';
 export const $ = id => document.getElementById(id);
 export const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 export const chip = fr => { const c = el('span', 'chip', fr.label.length > 18 ? 'No usar' : fr.label); c.style.background = FRESHNESS_COLORS[fr.level]; c.title = fr.label; return c; };

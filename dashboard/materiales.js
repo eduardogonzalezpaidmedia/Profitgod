@@ -1,9 +1,9 @@
 // Precios de materiales: tabla por grupo, tier y encantamiento. Editas el precio a mano o lo copias de los datos en línea (tu base + Albion Data Project).
 // Lo que ves aquí lo usan Costos, Calculadora, Estrategias y Más como precio de COMPRA del material (marcado «manual»).
-import { el, select } from './dom.js?v=0.18';
-import { ALL_GROUPS, groupTable, allMaterialIds, pickPrice } from '../tools/materials.js?v=0.18';
-import { iconUrl, fmt } from '../data/items.js?v=0.18';
-import { ageText } from '../data/freshness.js?v=0.18';
+import { el, select } from './dom.js?v=0.19';
+import { ALL_GROUPS, groupTable, allMaterialIds, pickPrice } from '../tools/materials.js?v=0.19';
+import { iconUrl, fmt } from '../data/items.js?v=0.19';
+import { ageText } from '../data/freshness.js?v=0.19';
 
 /** Copia precios de los datos en línea a tus precios guardados. No pisa los que escribiste a mano. → { n, kept, errs:[…], reason } */
 export async function loadMatPrices(ctx, game, ids, city, onProgress) {
@@ -26,7 +26,9 @@ export function mountMateriales(body, ctx, game) {
   drawNav(); drawTable();
 
   function drawNav() {
-    ui.nav.replaceChildren(); let kind = '';
+    ui.nav.replaceChildren(); ui.nav.classList.remove('open'); let kind = '';
+    const cur = ALL_GROUPS.find(g => g.base === S.base), tg = el('button', 'navtoggle', '📂 Categoría: ' + (cur ? cur.label : '') + ' ▾'); tg.setAttribute('aria-expanded', 'false');
+    tg.addEventListener('click', () => { const o = ui.nav.classList.toggle('open'); tg.setAttribute('aria-expanded', String(o)); }); ui.nav.appendChild(tg);
     ALL_GROUPS.forEach(g => { if (g.kind !== kind) { kind = g.kind; ui.nav.appendChild(el('div', 'navh', kind)); }
       const b = el('button', 'navi' + (g.base === S.base ? ' on' : ''), g.label); b.addEventListener('click', () => { S.base = g.base; drawNav(); drawTable(); }); ui.nav.appendChild(b); });
   }

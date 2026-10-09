@@ -81,3 +81,6 @@ Más → «🧱 Materiales»: tabla de precios de materiales (recursos y refinad
 
 ## v0.18
 Más → «🧮 Costos»: cada objeto (armas, armaduras, cascos, botas, capas, secundarias, bolsos) en bloques con su ícono, filas por Tier y columnas de encantamiento .0–.4, con el costo de fabricar una unidad = materiales de la receta × TUS precios de «🧱 Materiales» (opcional: % de devolución de recursos, solo sobre materiales que devuelven). Si falta el precio de un material muestra «?» (nunca 0) y el cursor dice cuál; «Cargar precios que faltan» copia de la base propia/AODP sin pisar lo que escribiste. «🧱 Materiales» ahora también tiene Artefactos, Equipo base, Comida y pociones, y Corazones y varios (los materiales que usan las recetas). No incluye tarifa de estación ni impuesto de venta. Código: `tools/costs.js`, `dashboard/costos.js`.
+
+## v0.19
+Teléfono: en Costos y Materiales la lista de categorías ahora es un desplegable («📂 Categoría: … ▾») y las tablas caben en pantalla (ícono arriba, Tier + .0–.4 en una sola vista, sin desplazarse de lado).

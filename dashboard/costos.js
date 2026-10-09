@@ -1,8 +1,8 @@
 // Costos de fabricación: cada objeto con sus tiers y encantamientos .0–.4, calculado con TUS precios de materiales (pestaña Materiales).
-import { el } from './dom.js?v=0.18';
-import { MENU, findEntry, costBlocks, craftCost, blockMaterialIds } from '../tools/costs.js?v=0.18';
-import { iconUrl, fmt } from '../data/items.js?v=0.18';
-import { loadMatPrices, loadMsg } from './materiales.js?v=0.18';
+import { el } from './dom.js?v=0.19';
+import { MENU, findEntry, costBlocks, craftCost, blockMaterialIds } from '../tools/costs.js?v=0.19';
+import { iconUrl, fmt } from '../data/items.js?v=0.19';
+import { loadMatPrices, loadMsg } from './materiales.js?v=0.19';
 
 const KEY = 'profitgod.costs';
 const readSt = () => { try { const j = JSON.parse(localStorage.getItem(KEY)); return j && typeof j === 'object' ? j : {}; } catch (e) { return {}; } };
@@ -17,7 +17,9 @@ export function mountCostos(body, ctx, game, goMat) {
   drawNav(); drawTable();
 
   function drawNav() {
-    ui.nav.replaceChildren();
+    ui.nav.replaceChildren(); ui.nav.classList.remove('open');
+    const cur = findEntry(S.key), tg = el('button', 'navtoggle', '📂 Categoría: ' + (cur ? cur.label : '') + ' ▾'); tg.setAttribute('aria-expanded', 'false');
+    tg.addEventListener('click', () => { const o = ui.nav.classList.toggle('open'); tg.setAttribute('aria-expanded', String(o)); }); ui.nav.appendChild(tg);
     MENU.forEach(sec => { ui.nav.appendChild(el('div', 'navh', sec.section));
       sec.items.forEach(it => { const b = el('button', 'navi' + (it.key === S.key ? ' on' : ''), it.label); b.addEventListener('click', () => { S.key = it.key; save(); drawNav(); drawTable(); }); ui.nav.appendChild(b); }); });
   }

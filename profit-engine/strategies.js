@@ -3,9 +3,9 @@
 //
 // Reglas (iguales al diseño): nada se inventa; sin precio de un material necesario la opción se descarta y se cuenta;
 // datos de más de 24 h no se recomiendan; solo venta INSTANT (la más prudente); Premium y Focus como los tengas configurados.
-import { craftBatch } from './profit.js?v=0.18';
-import { rateFor } from './scenario.js?v=0.18';
-import { sourceSummary } from '../data/merge.js?v=0.18';
+import { craftBatch } from './profit.js?v=0.19';
+import { rateFor } from './scenario.js?v=0.19';
+import { sourceSummary } from '../data/merge.js?v=0.19';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 const pos = v => isNum(v) && v > 0 ? v : null;

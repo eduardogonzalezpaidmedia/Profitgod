@@ -132,8 +132,19 @@ section.card h3{margin:16px 0 6px;font-size:15px}
 .mt-grid .dash{color:var(--mute)}
 .toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,12px);background:#161b22;border:1px solid var(--line);color:#e6edf3;padding:12px 18px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:.25s;z-index:30;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
-@media (max-width:760px){.matwrap{grid-template-columns:1fr}.matnav{position:static;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;max-height:none}.matnav .navh{display:none}.matnav .navi{white-space:nowrap}.mt-block,.mt-head{grid-template-columns:96px 1fr}.mt-head{grid-template-columns:96px minmax(100px,1.3fr) repeat(5,70px)}.mt-block{grid-template-columns:96px 1fr}.mt-grid{min-width:640px}.mt-obj{padding:8px}.mt-obj img{width:48px;height:48px}}
+@media (max-width:760px){.matwrap{grid-template-columns:1fr}.matnav{position:static;max-height:none;padding:6px}.matnav .navtoggle{display:block}.matnav:not(.open) .navh,.matnav:not(.open) .navi{display:none}.matnav.open{max-height:60vh;overflow:auto}.mt-block,.mt-head{grid-template-columns:96px 1fr}.mt-head{grid-template-columns:96px minmax(100px,1.3fr) repeat(5,70px)}.mt-block{grid-template-columns:96px 1fr}.mt-grid{min-width:640px}.mt-obj{padding:8px}.mt-obj img{width:48px;height:48px}}
 .mt-grid .cost{font-variant-numeric:tabular-nums;color:#fff;font-weight:600;cursor:help}
 .mt-grid .miss{color:var(--mute);cursor:help}
 .mt-title{margin:0 0 6px}
 .mt-block+.mt-block{border-top:2px solid var(--line)}
+
+.matnav .navtoggle{display:none;width:100%;text-align:left;background:none;border:0;color:var(--acc);font-weight:700;font-size:16px;padding:12px 10px}
+@media (max-width:760px){.matnav .navtoggle{display:block}}
+@media (max-width:760px){
+.mt-grid{min-width:0}
+.mt-head{grid-template-columns:52px repeat(5,minmax(0,1fr))}.mt-head .c:first-child{display:none}
+.mt-block{grid-template-columns:1fr}.mt-obj{flex-direction:row;justify-content:flex-start;border-right:0;border-bottom:1px solid var(--line);padding:8px 10px}.mt-obj img{width:40px;height:40px}.mt-name{text-align:left}
+.mt-block .mt-row{grid-template-columns:52px repeat(5,minmax(0,1fr))}
+.mt-grid .c{padding:8px 4px}.mt-grid .tier{font-size:12px}.mt-grid .tier .sub{display:none}
+.mt-grid .cost,.mt-grid .miss{font-size:12px}.mt-grid input{font-size:12px;padding:6px 2px}
+}
