@@ -84,3 +84,6 @@ Más → «🧮 Costos»: cada objeto (armas, armaduras, cascos, botas, capas, s
 
 ## v0.19
 Teléfono: en Costos y Materiales la lista de categorías ahora es un desplegable («📂 Categoría: … ▾») y las tablas caben en pantalla (ícono arriba, Tier + .0–.4 en una sola vista, sin desplazarse de lado).
+
+## v0.20
+Íconos de Costos y Materiales: si la imagen de un objeto no carga, prueba con otros tiers de la misma familia y, si ninguno carga, muestra un símbolo en vez de dejar el hueco vacío. Imágenes en tamaño 128 (más nítidas).

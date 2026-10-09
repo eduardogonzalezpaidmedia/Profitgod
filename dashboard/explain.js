@@ -1,5 +1,5 @@
 // Bloques de explicación compartidos: puntaje con todos sus componentes, avisos y motivos del riesgo.
-import { el } from './dom.js?v=0.19';
+import { el } from './dom.js?v=0.20';
 export function kv(t, label, val, cls) { const tr = el('tr'); tr.appendChild(el('td', '', label)); tr.appendChild(el('td', cls || '', val)); t.appendChild(tr); }
 export function scoreBlock(b, o) {
   const sc = o.opp; b.appendChild(el('h2', '', 'Puntaje: ' + sc.score + ' / 100'));

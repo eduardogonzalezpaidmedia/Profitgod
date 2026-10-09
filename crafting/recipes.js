@@ -77,7 +77,7 @@ export function loadGameData(base = 'data/game/') {
 }
 async function _load(base) {
   const names = ['items', 'recipes', 'materials', 'cities', 'stations', 'settings'];
-  const parts = await Promise.all(names.map(n => fetch(base + n + '.json?v=0.19').then(r => { if (!r.ok) throw new Error('No se pudo leer ' + n); return r.json(); })));
+  const parts = await Promise.all(names.map(n => fetch(base + n + '.json?v=0.20').then(r => { if (!r.ok) throw new Error('No se pudo leer ' + n); return r.json(); })));
   const raw = {}; names.forEach((n, i) => raw[n] = parts[i]);
   return makeGameData(raw);
 }

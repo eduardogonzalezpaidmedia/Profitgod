@@ -148,3 +148,7 @@ section.card h3{margin:16px 0 6px;font-size:15px}
 .mt-grid .c{padding:8px 4px}.mt-grid .tier{font-size:12px}.mt-grid .tier .sub{display:none}
 .mt-grid .cost,.mt-grid .miss{font-size:12px}.mt-grid input{font-size:12px;padding:6px 2px}
 }
+.ico{display:inline-flex;align-items:center;justify-content:center}
+.mt-obj .ico img{background:#2c3342;border:1px solid #4a5468;border-radius:12px;padding:4px;width:64px;height:64px}
+.ico-miss{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:12px;background:#2c3342;border:1px solid #4a5468;font-size:28px}
+@media (max-width:760px){.mt-obj .ico img,.ico-miss{width:40px;height:40px;font-size:20px}}

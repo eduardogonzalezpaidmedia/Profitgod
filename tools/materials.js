@@ -68,3 +68,11 @@ export function pickPrice(rows, city) {
   for (const r of rows) { if (city && r.city !== city) continue; const p = r.sell && r.sell.price; if (!(p > 0) || !(r.sell.age_min < 1440)) continue; if (!best || p < best.price) best = { price: p, city: r.city, age: r.sell.age_min, src: r.sell.src }; }
   return best;
 }
+
+/** Ids a probar para el ícono de un bloque: primero el principal, luego otros tiers de la familia (sin encantamiento primero). */
+export function blockIconIds(bl) {
+  const rows = [...bl.rows].sort((a, b) => Math.abs(a.tier - 4) - Math.abs(b.tier - 4)), out = [bl.iconId];
+  for (const r of rows) for (const c of r.cells) if (c && c.ench === 0) out.push(c.id);
+  for (const r of rows) for (const c of r.cells) if (c) out.push(c.id);
+  return out;
+}

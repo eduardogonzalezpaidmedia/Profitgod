@@ -1,9 +1,10 @@
 // Precios de materiales: tabla por grupo, tier y encantamiento. Editas el precio a mano o lo copias de los datos en línea (tu base + Albion Data Project).
 // Lo que ves aquí lo usan Costos, Calculadora, Estrategias y Más como precio de COMPRA del material (marcado «manual»).
-import { el, select } from './dom.js?v=0.19';
-import { ALL_GROUPS, groupTable, allMaterialIds, pickPrice } from '../tools/materials.js?v=0.19';
-import { iconUrl, fmt } from '../data/items.js?v=0.19';
-import { ageText } from '../data/freshness.js?v=0.19';
+import { el, select, iconImg } from './dom.js?v=0.20';
+import { ALL_GROUPS, groupTable, allMaterialIds, pickPrice } from '../tools/materials.js?v=0.20';
+import { blockIconIds } from '../tools/materials.js?v=0.20';
+import { iconUrl, fmt } from '../data/items.js?v=0.20';
+import { ageText } from '../data/freshness.js?v=0.20';
 
 /** Copia precios de los datos en línea a tus precios guardados. No pisa los que escribiste a mano. → { n, kept, errs:[…], reason } */
 export async function loadMatPrices(ctx, game, ids, city, onProgress) {
@@ -41,8 +42,8 @@ export function mountMateriales(body, ctx, game) {
     b1.addEventListener('click', () => load(g.ids, b1)); b2.addEventListener('click', () => load(allMaterialIds(game), b2)); b3.addEventListener('click', () => { ov().removeMany(g.ids); drawTable(); toast('Precios de ' + g.label.toLowerCase() + ' borrados'); });
     bar.append(l1, b1, b2, b3); m.appendChild(bar); ui.msg = el('p', 'msg'); m.appendChild(ui.msg);
     const t = el('div', 'mt-grid'), head = el('div', 'mt-row mt-head'); ['OBJETO', 'TIER', '.0', '.1', '.2', '.3', '.4'].forEach((x, i) => head.appendChild(el('div', i > 1 ? 'c r' : 'c', x))); t.appendChild(head);
-    g.blocks.forEach(bl => { const blk = el('div', 'mt-block'), obj = el('div', 'mt-obj'), im = el('img'); im.alt = ''; im.width = 64; im.height = 64; im.loading = 'lazy'; im.src = iconUrl(bl.iconId); im.addEventListener('error', () => { im.style.visibility = 'hidden'; });
-      obj.append(im, el('div', 'mt-name', bl.label)); const rowsBox = el('div', 'mt-rows');
+    g.blocks.forEach(bl => { const blk = el('div', 'mt-block'), obj = el('div', 'mt-obj');
+      obj.append(iconImg(blockIconIds(bl), 64, '🧱'), el('div', 'mt-name', bl.label)); const rowsBox = el('div', 'mt-rows');
       bl.rows.forEach(r => { const row = el('div', 'mt-row'), tc = el('div', 'c tier'); tc.appendChild(document.createTextNode(r.tier ? 'Tier ' + r.tier : 'Sin tier')); tc.appendChild(el('div', 'sub', r.name)); row.appendChild(tc);
         r.cells.forEach(c => { const cell = el('div', 'c r'); if (!c) { cell.appendChild(el('span', 'dash', '—')); } else cell.appendChild(priceInput(c.id)); row.appendChild(cell); }); rowsBox.appendChild(row); });
       blk.append(obj, rowsBox); t.appendChild(blk); });

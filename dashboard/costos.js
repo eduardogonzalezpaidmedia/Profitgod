@@ -1,8 +1,9 @@
 // Costos de fabricación: cada objeto con sus tiers y encantamientos .0–.4, calculado con TUS precios de materiales (pestaña Materiales).
-import { el } from './dom.js?v=0.19';
-import { MENU, findEntry, costBlocks, craftCost, blockMaterialIds } from '../tools/costs.js?v=0.19';
-import { iconUrl, fmt } from '../data/items.js?v=0.19';
-import { loadMatPrices, loadMsg } from './materiales.js?v=0.19';
+import { el, iconImg } from './dom.js?v=0.20';
+import { MENU, findEntry, costBlocks, craftCost, blockMaterialIds } from '../tools/costs.js?v=0.20';
+import { blockIconIds } from '../tools/materials.js?v=0.20';
+import { iconUrl, fmt } from '../data/items.js?v=0.20';
+import { loadMatPrices, loadMsg } from './materiales.js?v=0.20';
 
 const KEY = 'profitgod.costs';
 const readSt = () => { try { const j = JSON.parse(localStorage.getItem(KEY)); return j && typeof j === 'object' ? j : {}; } catch (e) { return {}; } };
@@ -38,8 +39,8 @@ export function mountCostos(body, ctx, game, goMat) {
     bar.append(l, b1, b2); m.appendChild(bar); ui.msg = el('p', 'msg', have + ' de ' + mats.length + ' materiales de esta lista ya tienen precio.'); m.appendChild(ui.msg);
     const t = el('div', 'mt-grid'), head = el('div', 'mt-row mt-head'); ['OBJETO', 'TIER', '.0', '.1', '.2', '.3', '.4'].forEach((x, i) => head.appendChild(el('div', i > 1 ? 'c r' : 'c', x))); t.appendChild(head);
     if (!blocks.length) t.appendChild(el('p', 'hint', 'No hay objetos con receta en esta categoría.'));
-    blocks.forEach(bl => { const blk = el('div', 'mt-block'), obj = el('div', 'mt-obj'), im = el('img'); im.alt = ''; im.width = 64; im.height = 64; im.loading = 'lazy'; im.src = iconUrl(bl.iconId); im.addEventListener('error', () => { im.style.visibility = 'hidden'; });
-      obj.append(im, el('div', 'mt-name', bl.label)); const rowsBox = el('div', 'mt-rows');
+    blocks.forEach(bl => { const blk = el('div', 'mt-block'), obj = el('div', 'mt-obj');
+      obj.append(iconImg(blockIconIds(bl)), el('div', 'mt-name', bl.label)); const rowsBox = el('div', 'mt-rows');
       bl.rows.forEach(r => { const row = el('div', 'mt-row'), tc = el('div', 'c tier'); tc.appendChild(document.createTextNode('Tier ' + r.tier)); tc.appendChild(el('div', 'sub', r.name)); row.appendChild(tc);
         r.cells.forEach(c => { const cell = el('div', 'c r');
           if (!c) cell.appendChild(el('span', 'dash', '—'));
