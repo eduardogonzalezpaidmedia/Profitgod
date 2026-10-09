@@ -152,3 +152,8 @@ section.card h3{margin:16px 0 6px;font-size:15px}
 .mt-obj .ico img{background:#2c3342;border:1px solid #4a5468;border-radius:12px;padding:4px;width:64px;height:64px}
 .ico-miss{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:12px;background:#2c3342;border:1px solid #4a5468;font-size:28px}
 @media (max-width:760px){.mt-obj .ico img,.ico-miss{width:40px;height:40px;font-size:20px}}
+.flout{display:grid;gap:10px;margin-top:12px}
+.fl-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:6px}
+.fl-top{display:flex;align-items:center;gap:10px}.fl-top .ico img{width:48px;height:48px;background:#2c3342;border-radius:10px;padding:3px}.fl-top .ico-miss{width:48px;height:48px;font-size:22px}
+.fl-name{flex:1;font-weight:700;color:var(--acc)}.fl-profit{font-weight:800;font-size:18px;color:#3fb950;white-space:nowrap}
+.fl-line{font-size:14px;line-height:1.5}.fl-meta{font-size:13px;color:var(--mute)}

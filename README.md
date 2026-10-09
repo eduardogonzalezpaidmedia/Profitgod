@@ -87,3 +87,6 @@ Teléfono: en Costos y Materiales la lista de categorías ahora es un desplegabl
 
 ## v0.20
 Íconos de Costos y Materiales: si la imagen de un objeto no carga, prueba con otros tiers de la misma familia y, si ninguno carga, muestra un símbolo en vez de dejar el hueco vacío. Imágenes en tamaño 128 (más nítidas).
+
+## v0.21
+Más → «🔁 Flip»: busca en todos los objetos T4–T8 y en todas las ciudades (sin Mercado Negro) dónde comprar directo (orden de venta más barata) y vender directo (orden de compra más alta) en otra ciudad. Muestra ciudad y precio de compra, ciudad y precio de venta, ganancia por unidad tras impuesto, ROI, unidades posibles, inversión y ganancia total, con la fuente (propio/público) y la antigüedad de cada precio. Filtros: silver disponible, tiers, antigüedad máxima de datos, ciudad de compra/venta, ganancia y ROI mínimos. «~» = cantidad no verificada. Código: `dashboard/flipdirecto.js` (usa `flipping/finder.js`).

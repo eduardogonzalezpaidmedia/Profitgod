@@ -1,21 +1,22 @@
 // Herramientas: planificador de varios ítems (con Cocina y Alquimia), flips de encanto, historial del oro y tablas de referencia.
-import { el, chip, field, select, input, num } from './dom.js?v=0.20';
-import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.20';
-import { planCrafts, plannerIds } from '../tools/planner.js?v=0.20';
-import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.20';
-import { goldStats } from '../tools/gold.js?v=0.20';
-import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.20';
-import { priceCard, searchAny } from '../tools/pricecard.js?v=0.20';
-import { mountMateriales } from './materiales.js?v=0.20';
-import { mountCostos } from './costos.js?v=0.20';
-import { potionRank, potionIds } from '../tools/potions.js?v=0.20';
-import { referenceTables } from '../tools/reference.js?v=0.20';
-import { freshness, ageText } from '../data/freshness.js?v=0.20';
-import { fmt } from '../data/items.js?v=0.20';
+import { el, chip, field, select, input, num } from './dom.js?v=0.21';
+import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.21';
+import { planCrafts, plannerIds } from '../tools/planner.js?v=0.21';
+import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.21';
+import { goldStats } from '../tools/gold.js?v=0.21';
+import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.21';
+import { priceCard, searchAny } from '../tools/pricecard.js?v=0.21';
+import { mountMateriales } from './materiales.js?v=0.21';
+import { mountCostos } from './costos.js?v=0.21';
+import { mountFlip } from './flipdirecto.js?v=0.21';
+import { potionRank, potionIds } from '../tools/potions.js?v=0.21';
+import { referenceTables } from '../tools/reference.js?v=0.21';
+import { freshness, ageText } from '../data/freshness.js?v=0.21';
+import { fmt } from '../data/items.js?v=0.21';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
-const SUBS = [['precio', '🔎 Precio'], ['costos', '🧮 Costos'], ['mat', '🧱 Materiales'], ['plan', '🧮 Planificador'], ['ench', '✨ Encantar'], ['mats', '💎 Runas y almas'], ['pot', '🧪 Pociones'], ['gear', '🛡 Equipo'], ['oro', '🪙 Oro'], ['ref', '📚 Referencia']];
+const SUBS = [['precio', '🔎 Precio'], ['flip', '🔁 Flip'], ['costos', '🧮 Costos'], ['mat', '🧱 Materiales'], ['plan', '🧮 Planificador'], ['ench', '✨ Encantar'], ['mats', '💎 Runas y almas'], ['pot', '🧪 Pociones'], ['gear', '🛡 Equipo'], ['oro', '🪙 Oro'], ['ref', '📚 Referencia']];
 const PRESETS = [['', 'Todo'], ['food', '🍲 Cocina'], ['potion', '⚗️ Alquimia'], ['ore', 'Refinado (mineral)'], ['wood', 'Refinado (madera)'], ['fiber', 'Refinado (fibra)'], ['hide', 'Refinado (piel)'], ['rock', 'Refinado (piedra)']];
 
 export function mountTools(root, ctx) {
@@ -37,7 +38,7 @@ export function mountTools(root, ctx) {
   }
   function drawSub() {
     ui.bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === sub)); ui.body.replaceChildren();
-    ({ precio: drawPrice, costos: () => mountCostos(ui.body, ctx, game, () => { sub = 'mat'; drawSub(); }), mat: () => mountMateriales(ui.body, ctx, game), plan: drawPlan, ench: drawEnch, mats: drawMats, pot: drawPot, gear: drawGear, oro: drawGold, ref: drawRef })[sub]();
+    ({ precio: drawPrice, flip: () => mountFlip(ui.body, ctx, game), costos: () => mountCostos(ui.body, ctx, game, () => { sub = 'mat'; drawSub(); }), mat: () => mountMateriales(ui.body, ctx, game), plan: drawPlan, ench: drawEnch, mats: drawMats, pot: drawPot, gear: drawGear, oro: drawGold, ref: drawRef })[sub]();
   }
   const noSrc = () => !ctx.getSrc().usable();
   const errText = e => e && e.message && e.message.includes('Failed to fetch') ? 'No se pudo conectar con tu base.' : (e && e.message) || String(e);

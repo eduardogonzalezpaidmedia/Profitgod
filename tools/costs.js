@@ -1,5 +1,5 @@
 // Costo de fabricar con TUS precios de materiales. Función pura: recibe una función price(id) → número|null.
-import { famKey, familyBlocks } from './materials.js?v=0.20';
+import { famKey, familyBlocks } from './materials.js?v=0.21';
 
 const L = { sword: 'Espadas', axe: 'Hachas', mace: 'Mazas', hammer: 'Martillos', knuckles: 'Guanteletes', bow: 'Arcos', crossbow: 'Ballestas', dagger: 'Dagas', spear: 'Lanzas', quarterstaff: 'Bastones de combate', cursestaff: 'Bastones malditos', froststaff: 'Bastones de escarcha', firestaff: 'Bastones de fuego', arcanestaff: 'Bastones arcanos', holystaff: 'Bastones sagrados', naturestaff: 'Bastones de naturaleza', shapeshifterstaff: 'Bastones cambiaformas',
   plate_armor: 'Armaduras de placas', leather_armor: 'Chaquetas de cuero', cloth_armor: 'Túnicas de tela', plate_helmet: 'Cascos de placas', leather_helmet: 'Capuchas de cuero', cloth_helmet: 'Cowls de tela', other: 'Otros', plate_shoes: 'Botas de placas', leather_shoes: 'Zapatos de cuero', cloth_shoes: 'Sandalias de tela',

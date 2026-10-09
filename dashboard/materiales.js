@@ -1,10 +1,10 @@
 // Precios de materiales: tabla por grupo, tier y encantamiento. Editas el precio a mano o lo copias de los datos en línea (tu base + Albion Data Project).
 // Lo que ves aquí lo usan Costos, Calculadora, Estrategias y Más como precio de COMPRA del material (marcado «manual»).
-import { el, select, iconImg } from './dom.js?v=0.20';
-import { ALL_GROUPS, groupTable, allMaterialIds, pickPrice } from '../tools/materials.js?v=0.20';
-import { blockIconIds } from '../tools/materials.js?v=0.20';
-import { iconUrl, fmt } from '../data/items.js?v=0.20';
-import { ageText } from '../data/freshness.js?v=0.20';
+import { el, select, iconImg } from './dom.js?v=0.21';
+import { ALL_GROUPS, groupTable, allMaterialIds, pickPrice } from '../tools/materials.js?v=0.21';
+import { blockIconIds } from '../tools/materials.js?v=0.21';
+import { iconUrl, fmt } from '../data/items.js?v=0.21';
+import { ageText } from '../data/freshness.js?v=0.21';
 
 /** Copia precios de los datos en línea a tus precios guardados. No pisa los que escribiste a mano. → { n, kept, errs:[…], reason } */
 export async function loadMatPrices(ctx, game, ids, city, onProgress) {
