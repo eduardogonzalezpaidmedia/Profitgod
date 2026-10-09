@@ -1,8 +1,8 @@
 // Busca oportunidades de flipping leyendo tus datos y los públicos. Sin DOM: lo usan «Flipping» y «¿Qué hago hoy?».
-import { scan, walk, orderEstimate, liquidityLevel } from './flipping.js?v=0.21';
-import { flipRisk, historyView } from '../black-market/risk.js?v=0.21';
-import { scoreAll } from '../opportunity-engine/score.js?v=0.21';
-import { findAnomalies } from '../history/anomalies.js?v=0.21';
+import { scan, walk, orderEstimate, liquidityLevel } from './flipping.js?v=0.22';
+import { flipRisk, historyView } from '../black-market/risk.js?v=0.22';
+import { scoreAll } from '../opportunity-engine/score.js?v=0.22';
+import { findAnomalies } from '../history/anomalies.js?v=0.22';
 
 const flat = r => ({ item_id: r.item_id, city: r.city, quality: r.quality, sell_min: r.sell.price, sell_age: r.sell.age, sell_amount: r.sell.amount, sell_src: r.sell.src, buy_max: r.buy.price, buy_age: r.buy.age, buy_amount: r.buy.amount, buy_src: r.buy.src });
 export const flipMinutes = (cfg, from, start) => (cfg.tripMin || 15) + (cfg.actionMin || 5) + (start && from && from !== start ? (cfg.tripMin || 15) : 0);   // si compras en otra ciudad, primero hay que ir
@@ -22,10 +22,10 @@ export async function findFlips(p) {
   const { src, game, cfg } = p, unk = cfg.unknownDepthUnits || 10, silver = p.silver || 0, maxUnits = p.maxUnits || 0;
   const taxPct = cfg.premium ? game.settings.taxes.sales_tax_premium_pct : game.settings.taxes.sales_tax_no_premium_pct, setupPct = game.settings.taxes.setup_fee_pct;
   const cities = [...new Set([...p.buy, ...p.sell])];
-  const mk = await src.market(cities, { maxage: 1440, limit: 8000, extraIds: p.extra || [] });
+  const mk = await src.market(cities, { maxage: p.maxAge || 1440, limit: 8000, extraIds: p.extra || [] });
   const info = { ownCount: mk.ownCount, pubCount: mk.pubCount, items: mk.itemCount, truncated: mk.truncated, errs: [mk.ownError && 'Tu base: ' + mk.ownError, mk.pubError && 'Datos públicos: ' + mk.pubError].filter(Boolean) };
   const rows = mk.rows.map(flat), idx = new Map(mk.rows.map(r => [r.city + '|' + r.item_id + '|' + r.quality, r]));
-  const cand = scan(rows, { buyCities: p.buy, sellCities: p.sell, taxPct, maxAgeMin: 1440, unknownUnits: unk, top: p.top || 60, minUnitProfit: p.minUnitProfit || 0 });
+  const cand = scan(rows, { buyCities: p.buy, sellCities: p.sell, taxPct, maxAgeMin: p.maxAge || 1440, unknownUnits: unk, top: p.top || 60, minUnitProfit: p.minUnitProfit || 0 });
   const books = new Map(), ids = [...new Set(cand.map(c => c.item_id))];
   if (src.own.on() && ids.length) for (let i = 0; i < ids.length; i += 100) { try { (await src.own.book(ids.slice(i, i + 100), cities)).rows.forEach(b => books.set(b.city + '|' + b.item_id + '|' + b.quality, b)); } catch (e) { info.errs.push('Tu base (órdenes): ' + e.message); } }
   let out = cand.map(c => {

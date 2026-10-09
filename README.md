@@ -90,3 +90,6 @@ Teléfono: en Costos y Materiales la lista de categorías ahora es un desplegabl
 
 ## v0.21
 Más → «🔁 Flip»: busca en todos los objetos T4–T8 y en todas las ciudades (sin Mercado Negro) dónde comprar directo (orden de venta más barata) y vender directo (orden de compra más alta) en otra ciudad. Muestra ciudad y precio de compra, ciudad y precio de venta, ganancia por unidad tras impuesto, ROI, unidades posibles, inversión y ganancia total, con la fuente (propio/público) y la antigüedad de cada precio. Filtros: silver disponible, tiers, antigüedad máxima de datos, ciudad de compra/venta, ganancia y ROI mínimos. «~» = cantidad no verificada. Código: `dashboard/flipdirecto.js` (usa `flipping/finder.js`).
+
+## v0.22
+🔁 Flip: la antigüedad máxima de los datos ahora llega hasta 3 y 7 días (antes 24 h). Con datos de más de 1 día muestra un aviso para confirmar el precio en el juego. Si subes la antigüedad después de buscar, pulsa «Buscar» otra vez para leer los datos más viejos.

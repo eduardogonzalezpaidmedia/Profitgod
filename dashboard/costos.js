@@ -1,9 +1,9 @@
 // Costos de fabricación: cada objeto con sus tiers y encantamientos .0–.4, calculado con TUS precios de materiales (pestaña Materiales).
-import { el, iconImg } from './dom.js?v=0.21';
-import { MENU, findEntry, costBlocks, craftCost, blockMaterialIds } from '../tools/costs.js?v=0.21';
-import { blockIconIds } from '../tools/materials.js?v=0.21';
-import { iconUrl, fmt } from '../data/items.js?v=0.21';
-import { loadMatPrices, loadMsg } from './materiales.js?v=0.21';
+import { el, iconImg } from './dom.js?v=0.22';
+import { MENU, findEntry, costBlocks, craftCost, blockMaterialIds } from '../tools/costs.js?v=0.22';
+import { blockIconIds } from '../tools/materials.js?v=0.22';
+import { iconUrl, fmt } from '../data/items.js?v=0.22';
+import { loadMatPrices, loadMsg } from './materiales.js?v=0.22';
 
 const KEY = 'profitgod.costs';
 const readSt = () => { try { const j = JSON.parse(localStorage.getItem(KEY)); return j && typeof j === 'object' ? j : {}; } catch (e) { return {}; } };

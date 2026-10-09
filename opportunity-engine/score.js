@@ -1,6 +1,6 @@
 // Opportunity Score 0–100, transparente: cada componente va de 0 a 1, se muestra su valor y su aporte.
 // Lo que no se puede saber (sin historial, sin cantidades) vale 0 y se declara: la incertidumbre baja el puntaje, no se supone.
-import { WEIGHTS, FRESHNESS_MULT, RISK_MULT, LIQ_VALUE } from './config.js?v=0.21';
+import { WEIGHTS, FRESHNESS_MULT, RISK_MULT, LIQ_VALUE } from './config.js?v=0.22';
 const isNum = v => typeof v === 'number' && isFinite(v);
 const clamp = v => Math.max(0, Math.min(1, v));
 const RISK_ORD = { BAJO: 0, MEDIO: 1, ALTO: 2 };

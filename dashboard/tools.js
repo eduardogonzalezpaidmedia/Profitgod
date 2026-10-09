@@ -1,18 +1,18 @@
 // Herramientas: planificador de varios ítems (con Cocina y Alquimia), flips de encanto, historial del oro y tablas de referencia.
-import { el, chip, field, select, input, num } from './dom.js?v=0.21';
-import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.21';
-import { planCrafts, plannerIds } from '../tools/planner.js?v=0.21';
-import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.21';
-import { goldStats } from '../tools/gold.js?v=0.21';
-import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.21';
-import { priceCard, searchAny } from '../tools/pricecard.js?v=0.21';
-import { mountMateriales } from './materiales.js?v=0.21';
-import { mountCostos } from './costos.js?v=0.21';
-import { mountFlip } from './flipdirecto.js?v=0.21';
-import { potionRank, potionIds } from '../tools/potions.js?v=0.21';
-import { referenceTables } from '../tools/reference.js?v=0.21';
-import { freshness, ageText } from '../data/freshness.js?v=0.21';
-import { fmt } from '../data/items.js?v=0.21';
+import { el, chip, field, select, input, num } from './dom.js?v=0.22';
+import { loadGameData, CATEGORY_LABEL, QUALITIES } from '../crafting/recipes.js?v=0.22';
+import { planCrafts, plannerIds } from '../tools/planner.js?v=0.22';
+import { enchantFlips, enchantIds } from '../tools/enchant.js?v=0.22';
+import { goldStats } from '../tools/gold.js?v=0.22';
+import { KINDS, kindName, defaultId, slotKey, matIds, enchantCosts, cheapest } from '../tools/enchantcost.js?v=0.22';
+import { priceCard, searchAny } from '../tools/pricecard.js?v=0.22';
+import { mountMateriales } from './materiales.js?v=0.22';
+import { mountCostos } from './costos.js?v=0.22';
+import { mountFlip } from './flipdirecto.js?v=0.22';
+import { potionRank, potionIds } from '../tools/potions.js?v=0.22';
+import { referenceTables } from '../tools/reference.js?v=0.22';
+import { freshness, ageText } from '../data/freshness.js?v=0.22';
+import { fmt } from '../data/items.js?v=0.22';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };

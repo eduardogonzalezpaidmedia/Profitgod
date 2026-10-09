@@ -1,19 +1,19 @@
-import { load, save } from '../data/store.js?v=0.21';
-import { makeApi } from '../data/api.js?v=0.21';
-import { ageText } from '../data/freshness.js?v=0.21';
-import { parseItem, fmt } from '../data/items.js?v=0.21';
-import { CITIES } from '../markets/cities.js?v=0.21';
-import { HOURS, RISKS } from '../settings/defaults.js?v=0.21';
+import { load, save } from '../data/store.js?v=0.22';
+import { makeApi } from '../data/api.js?v=0.22';
+import { ageText } from '../data/freshness.js?v=0.22';
+import { parseItem, fmt } from '../data/items.js?v=0.22';
+import { CITIES } from '../markets/cities.js?v=0.22';
+import { HOURS, RISKS } from '../settings/defaults.js?v=0.22';
 
-import { $, el, chip, num, numDec } from './dom.js?v=0.21';
-import { mountCalc } from './calc.js?v=0.21';
-import { mountStrat } from './strat.js?v=0.21';
-import { mountInicio } from './inicio.js?v=0.21';
-import { mountOps } from './ops.js?v=0.21';
-import { mountTools } from './tools.js?v=0.21';
-import { makeJournal } from '../data/journal.js?v=0.21';
-import { makeSources } from '../data/sources.js?v=0.21';
-import { SERVERS } from '../data/public.js?v=0.21';
+import { $, el, chip, num, numDec } from './dom.js?v=0.22';
+import { mountCalc } from './calc.js?v=0.22';
+import { mountStrat } from './strat.js?v=0.22';
+import { mountInicio } from './inicio.js?v=0.22';
+import { mountOps } from './ops.js?v=0.22';
+import { mountTools } from './tools.js?v=0.22';
+import { makeJournal } from '../data/journal.js?v=0.22';
+import { makeSources } from '../data/sources.js?v=0.22';
+import { SERVERS } from '../data/public.js?v=0.22';
 let cfg = load(), api = makeApi(cfg), src = makeSources(cfg);
 
 function fillSelect(sel, items, cur, label) { sel.replaceChildren(); items.forEach(v => { const o = el('option', '', label ? label(v) : v); o.value = v; sel.appendChild(o); }); sel.value = cur; }

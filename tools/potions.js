@@ -1,8 +1,8 @@
 // Ranking de pociones: volumen vendido, precio y ganancia por unidad. Función pura.
 // Volumen = unidades vendidas por día que REPORTA Albion Data Project (historial público); no es el total real del servidor.
 // Nada se inventa: sin historial no hay volumen; sin precio de algún material no hay costo.
-import { craftBatch } from '../profit-engine/profit.js?v=0.21';
-import { rateFor } from '../profit-engine/scenario.js?v=0.21';
+import { craftBatch } from '../profit-engine/profit.js?v=0.22';
+import { rateFor } from '../profit-engine/scenario.js?v=0.22';
 
 const isNum = v => typeof v === 'number' && isFinite(v);
 const pos = v => isNum(v) && v > 0 ? v : null;
