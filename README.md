@@ -93,3 +93,6 @@ Más → «🔁 Flip»: busca en todos los objetos T4–T8 y en todas las ciudad
 
 ## v0.22
 🔁 Flip: la antigüedad máxima de los datos ahora llega hasta 3 y 7 días (antes 24 h). Con datos de más de 1 día muestra un aviso para confirmar el precio en el juego. Si subes la antigüedad después de buscar, pulsa «Buscar» otra vez para leer los datos más viejos.
+
+## v0.23
+🔁 Flip rediseñado como tabla de calculadora de flipping: Ítem (con calidad), Última actualización, Compra en, Precio de compra, Venta en, Precio de venta, Ganancia por ítem, Margen y botón «Ver» con los detalles (fuente, antigüedad, unidades, inversión y ganancia total). Interruptores de ciudades (Mercado Negro apagado por defecto) y de calidades, orden (ganancia, margen, total, más recientes) y filtros. Usa por defecto SOLO los datos de tu Albion Data Client en tu base («propio»); se puede incluir lo público. Lee al abrir la pestaña y guarda tus filtros en este dispositivo. En teléfono las filas son tarjetas.

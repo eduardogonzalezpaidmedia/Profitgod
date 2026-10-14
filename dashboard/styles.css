@@ -157,3 +157,34 @@ section.card h3{margin:16px 0 6px;font-size:15px}
 .fl-top{display:flex;align-items:center;gap:10px}.fl-top .ico img{width:48px;height:48px;background:#2c3342;border-radius:10px;padding:3px}.fl-top .ico-miss{width:48px;height:48px;font-size:22px}
 .fl-name{flex:1;font-weight:700;color:var(--acc)}.fl-profit{font-weight:800;font-size:18px;color:#3fb950;white-space:nowrap}
 .fl-line{font-size:14px;line-height:1.5}.fl-meta{font-size:13px;color:var(--mute)}
+/* ===== Flip (diseño tipo calculadora de flipping) ===== */
+.fl-panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:14px;margin-bottom:12px}
+.fl-group h4{margin:0 0 8px;font-size:15px}
+.fl-toggles{display:flex;flex-wrap:wrap;gap:8px}
+.fl-tg{background:#0d1117;border:1px solid var(--line);color:var(--mute);border-radius:999px;padding:7px 14px;font-size:14px}
+.fl-tg.on{background:#1f4fa3;border-color:#3b82f6;color:#fff}
+.fl-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:8px}
+.fl-fields label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
+.fl-chk{display:block;font-size:14px;margin-top:6px}
+.fl-status{color:var(--mute);font-size:14px;margin:8px 0}
+.fl-table{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:15px}
+.fl-table th{text-align:left;color:var(--mute);font-size:13px;padding:8px 10px;white-space:normal}
+.fl-table td{background:var(--card);padding:10px;vertical-align:middle}
+.fl-table tr td:first-child{border-radius:12px 0 0 12px}.fl-table tr td:last-child{border-radius:0 12px 12px 0}
+.fl-item{display:flex;align-items:center;gap:10px;min-width:200px}.fl-item .ico img{width:44px;height:44px;border-radius:8px;background:#2c3342;padding:2px}.fl-item .ico-miss{width:44px;height:44px;font-size:20px}
+.fl-nm{font-weight:600}.fl-q{display:inline-block;font-size:12px;color:var(--mute);background:#0d1117;border-radius:6px;padding:1px 7px;margin-top:3px}
+.fl-age{display:inline-block;font-size:13px;font-weight:600;border-radius:6px;padding:3px 9px;color:#fff;background:#1f4fa3}
+.fl-age.ok{background:#1f4fa3}.fl-age.warn{background:#8a5a00}.fl-age.bad{background:#8b2b2b}
+.fl-gain{color:#3fb950}
+.fl-view{background:#1f4fa3;border:0;color:#fff;border-radius:6px;padding:6px 14px;font-weight:600}
+.fl-det td{padding:0!important;background:none!important}.fl-detail{background:#0d1117;border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:6px;font-size:14px;margin-bottom:6px}
+@media (max-width:760px){
+.fl-table thead{display:none}.fl-table,.fl-table tbody{display:block}
+.fl-table tr:not(.fl-det){display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;background:var(--card);border-radius:12px;padding:10px;margin-bottom:8px}
+.fl-table tr:not(.fl-det) td{display:block;background:none;padding:2px 0;border-radius:0!important}
+.fl-table td::before{content:attr(data-l);display:block;font-size:11px;color:var(--mute)}
+.fl-table td[data-l="Ítem"]{grid-column:1/-1}.fl-table td[data-l="Ítem"]::before{display:none}.fl-table td[data-l="Detalles"]{grid-column:1/-1}.fl-table td[data-l="Detalles"]::before{display:none}
+.fl-det,.fl-det td{display:block}
+}
+.fl-chk input{width:auto;display:inline-block;margin-right:8px;vertical-align:middle}.fl-fields input,.fl-fields select{width:100%}
+@media (max-width:760px){.fl-table td{text-align:left}.fl-detail{font-size:13px}}
